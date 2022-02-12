@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
 
+let client;
+
 export default function createArrivalBot() {
-    const client = new Client({ 
+    client = new Client({ 
         intents: [
             Intents.FLAGS.GUILDS, 
             Intents.FLAGS.GUILD_MESSAGES,
@@ -33,6 +35,8 @@ export default function createArrivalBot() {
             console.log("User is arriving");
             console.log(message.author.username + ":" + message.author.discriminator);
             message.reply("Welcome " + message.author.username);
+            // console.log(client.users.find(u => {console.log(u.username)}));
+            // message.reply(`<@${client.users.cache.find(u => u.username === "holeintheozone:6110").id}>`);
         }
     });
 

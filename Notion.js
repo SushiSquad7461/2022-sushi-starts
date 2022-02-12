@@ -5,10 +5,6 @@ const notion = new Client({ auth: process.env.NOTION_KEY })
 const ATTENDENCEID = process.env.NOTION_DATABASE_ID
 const ROSTERID = process.env.ROSTER_ID
 
-const DATE = new Date(Date.now())
-
-const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
-
 // async function readDatabase() {
 //   try {
 //     const response = await notion.databases.retrieve({ database_id:attendanceId})
@@ -43,6 +39,10 @@ async function getUser(tag) {
 }
 
 async function markPresent(tag) {
+  const DATE = new Date(Date.now())
+  const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
+  const day = DATE.getDay();
+  const time = DATE.getHours();
   const user = await getUser(tag);
   let pageId;
   try {
@@ -55,24 +55,58 @@ async function markPresent(tag) {
         }
       }
     });
-    pageId = currPage.results[0].id;
-    let people = currPage.results[0].properties.Attendees.people;
-    people.push(user);
-    console.log(people);
-
-    const response = await notion.pages.update({
-      page_id: pageId,
-      properties: {
-        'Attendees': {
-          people: people,
+    if(((day>0 && day<6)&&(time<16)) || (day===6 && time<11))
+    {
+      pageId = currPage.results[0].id;
+      let people = currPage.results[0].properties.Attendees.people;
+      people.push(user);
+      const response = await notion.pages.update({
+        page_id: pageId,
+        properties: {
+          'Attendees': {
+            people: people,
+          },
         },
-      },
-    });
-  
+      });
+    }
+    else
+    {
+      pageId = currPage.results[0].id;
+      let people = currPage.results[0].properties["Late Attendees"].people;
+      people.push(user);
+      const response = await notion.pages.update({
+        page_id: pageId,
+        properties: {
+          'Late Attendees': {
+            people: people,
+          },
+        },
+      });
+    }
   }
   catch(error) {
     console.error(error.body)
   }
 
 }
-markPresent("titanium47#4982");
+
+async function getAttendees()
+{
+  try {
+    const currPage = await notion.databases.query({
+      database_id: ATTENDENCEID,
+      filter: {
+        "property": 'Name',
+        "text": {
+          "contains": date,
+        }
+      }
+    });
+    latepeople = currPage.results[0].properties["Late Attendees"].people;
+    people = currPage.results[0].properties.Attendees.people;
+  }
+  catch(error) {
+    console.error(error.body);
+  }
+}
+markPresent("titanium 47#4982");

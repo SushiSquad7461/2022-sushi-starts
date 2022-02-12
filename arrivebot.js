@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
-
+import markPresent from "./notion.js";
 let client;
 
 export default function createArrivalBot() {
@@ -30,11 +30,12 @@ export default function createArrivalBot() {
         }
     });
 
-    client.on('messageCreate', (message) => {
+    client.on('messageCreate', async (message) => {
         if (message.mentions.has(client.user)) {
             console.log("User is arriving");
-            console.log(message.author.username + ":" + message.author.discriminator);
+            console.log(message.author.username + "#" + message.author.discriminator);
             message.reply("Welcome " + message.author.username);
+            await markPresent(message.author.username + "#" + message.author.discriminator);
             // console.log(client.users.find(u => {console.log(u.username)}));
             // message.reply(`<@${client.users.cache.find(u => u.username === "holeintheozone:6110").id}>`);
         }

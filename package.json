@@ -1,0 +1,11 @@
+{
+    "name": "Robotics_Attendance",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "",
+    "main": "test.js",
+    "dependencies": {
+        "@notionhq/client": "^0.1.9",
+        "dotenv": "^16.0.0"
+    }
+}

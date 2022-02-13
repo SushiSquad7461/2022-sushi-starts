@@ -1,11 +1,11 @@
 {
-  "type": "module",
-  "dependencies": {
-    "@notionhq/client": "^0.4.13",
-    "axios": "^0.25.0",
-    "discord.js": "^13.6.0",
-    "dotenv": "^16.0.0",
-    "nodeman": "^1.1.2",
-    "nodemon": "^2.0.15"
-  }
+    "name": "Robotics_Attendance",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "",
+    "main": "test.js",
+    "dependencies": {
+        "@notionhq/client": "^0.1.9",
+        "dotenv": "^16.0.0"
+    }
 }

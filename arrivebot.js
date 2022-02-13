@@ -1,33 +1,19 @@
 import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
-import markPresent from "./notion.js";
+import {markPresent, getAttendees} from "./notion.js";
 let client;
+let guild;
 
-export default function createArrivalBot() {
-    client = new Client({ 
+export default function createArrivalBot(curr_attendees) {
+    client = new Client({
         intents: [
-            Intents.FLAGS.GUILDS, 
-            Intents.FLAGS.GUILD_MESSAGES,
-        ] 
+            Intents.FLAGS.GUILDS,
+            Intents.FLAGS.GUILD_MESSAGES
+        ]
     });
-    
+
     client.on('ready', () => {
           console.log(`Logged in as ${client.user.tag}!`);
-    });
-    
-    client.on('interactionCreate', async interaction => {
-        try {
-            console.log(interaction);
-            console.log("ur mom");
-            console.log("Hello: " + interaction.member);
-        } catch(e) {
-            console.log(e);
-        }
-        if (!interaction.isCommand()) return;
-
-        if (interaction.commandName === 'ping') {
-            await interaction.reply('Pong!');
-        }
     });
 
     client.on('messageCreate', async (message) => {
@@ -36,8 +22,15 @@ export default function createArrivalBot() {
             console.log(message.author.username + "#" + message.author.discriminator);
             message.reply("Welcome " + message.author.username);
             await markPresent(message.author.username + "#" + message.author.discriminator);
-            // console.log(client.users.find(u => {console.log(u.username)}));
-            // message.reply(`<@${client.users.cache.find(u => u.username === "holeintheozone:6110").id}>`);
+            console.log(curr_attendees.attendees_id);
+
+            let ping = "";
+            for (let i of curr_attendees.attendees_id) {
+                ping += `<@${i}> `
+            }
+            message.reply(ping);
+
+            curr_attendees.addAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
         }
     });
 

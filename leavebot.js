@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { Client, Intents } from 'discord.js';
 
-export default function createLeaveBot() {
+export default function createLeaveBot(curr_attendees) {
     const client = new Client({ 
         intents: [
             Intents.FLAGS.GUILDS, 
@@ -18,6 +18,7 @@ export default function createLeaveBot() {
             console.log("User is leaving");
             console.log(message.author.username + ":" + message.author.discriminator);
             message.reply("Goodbye " + message.author.username);
+            curr_attendees.removeAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
         }
     });
 

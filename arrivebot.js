@@ -28,6 +28,11 @@ export default function createArrivalBot(curr_attendees) {
             for (let i of curr_attendees.attendees_id) {
                 ping += `<@${i}> `
             }
+
+            if (ping === "") {
+                ping = "No current attendees";
+            }
+
             message.reply(ping);
 
             curr_attendees.addAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);

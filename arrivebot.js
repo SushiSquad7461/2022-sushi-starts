@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
-import {markPresent, getAttendees} from "./notion.js";
+import {markPresent, getAttendees, logPing} from "./notion.js";
 let client;
 let guild;
 

@@ -4,6 +4,7 @@ const notion = new Client({ auth: process.env.NOTION_KEY })
 
 const ATTENDENCEID = process.env.NOTION_DATABASE_ID
 const ROSTERID = process.env.ROSTER_ID
+const LOGID = process.env.LOG_ID
 
 async function getUser(tag) {
   let pageId;
@@ -166,4 +167,27 @@ export async function getAttendees() {
     console.error(error);
   }
 }
-markPresent("titanium 47#4982");
+
+export async function logPing(leaving, tag) {
+  const user = await getUser(tag);
+  try {
+    const response = await notion.pages.create({
+      parent: {
+        database_id: LOGID,
+      },
+      properties: {
+        Leaving: {
+          checkbox: leaving
+        },
+        Person: {
+          people: [
+            user
+          ]
+        }
+      }
+    })
+  }
+  catch(error) {
+    console.log(error.body);
+  }
+}

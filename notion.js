@@ -4,10 +4,6 @@ const notion = new Client({ auth: process.env.NOTION_KEY })
 
 const ATTENDENCEID = process.env.NOTION_DATABASE_ID
 const ROSTERID = process.env.ROSTER_ID
-const DATE = new Date(Date.now())
-const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
-const day = DATE.getDay();
-const time = DATE.getHours();
 
 async function getUser(tag) {
   let pageId;
@@ -30,9 +26,7 @@ async function getUser(tag) {
   return userinfo.properties["Notion User"]["people"][0];
 }
 
-export async function markPresent(tag) {
-  const user = await getUser(tag);
-  let pageId;
+async function getCurrPage(date) {
   try {
     const currPage = await notion.databases.query({
       database_id: ATTENDENCEID,
@@ -43,6 +37,63 @@ export async function markPresent(tag) {
         }
       }
     });
+    return currPage;
+  }
+  catch(error) {
+      return error.body;
+  }
+}
+
+async function createPage(date) {
+  try {
+    const response = await notion.pages.create({
+      parent: {
+        database_id: ATTENDENCEID,
+      },
+      icon: {
+        type: 'emoji', emoji: '📝'
+      },
+      properties: {
+        Name: {
+          title: [
+            {
+              type: 'text',
+              text: { content: date, link: null },
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: 'default'
+              },
+              plain_text: date,
+              href: null
+            }
+          ]
+        }
+      }
+    })
+  }
+  catch(error) {
+    console.log(error.body);
+  }
+}
+
+export async function markPresent(tag) {
+  const DATE = new Date(Date.now());
+  const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
+  const day = DATE.getDay();
+  const time = DATE.getHours();
+  const user = await getUser(tag);
+  let currPage = await getCurrPage(date);
+  if( currPage.results.length === 0) {
+    await createPage(date);
+    currPage = await getCurrPage(date);
+  }
+  //console.log(currPage);
+  let pageId = currPage.results[0].id;
+  try {
     if(((day>0 && day<6)&&(time<16)) || (day===6 && time<11))
     {
       pageId = currPage.results[0].id;
@@ -59,7 +110,6 @@ export async function markPresent(tag) {
     }
     else
     {
-      pageId = currPage.results[0].id;
       let people = currPage.results[0].properties["Late Attendees"].people;
       people.push(user);
       const response = await notion.pages.update({
@@ -73,9 +123,8 @@ export async function markPresent(tag) {
     }
   }
   catch(error) {
-    console.error(error.body)
+    console.log(error.body);
   }
-
 }
 
 export async function getAttendees() {

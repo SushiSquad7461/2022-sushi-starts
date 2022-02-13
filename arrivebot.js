@@ -18,6 +18,7 @@ export default function createArrivalBot(curr_attendees) {
 
     client.on('messageCreate', async (message) => {
         if (message.mentions.has(client.user)) {
+            await logPing(false, message.author.username + "#" + message.author.discriminator );
             console.log("User is arriving");
             console.log(message.author.username + "#" + message.author.discriminator);
             message.reply("Welcome " + message.author.username);

@@ -186,8 +186,7 @@ export async function logPing(leaving, tag) {
         }
       }
     })
-  }
-  catch(error) {
+  } catch(error) {
     console.log(error.body);
   }
 }

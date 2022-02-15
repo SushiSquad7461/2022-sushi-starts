@@ -20,8 +20,11 @@ export default function createArrivalBot(curr_attendees) {
         if (message.mentions.has(client.user)) {
             console.log("User is arriving");
             console.log(message.author.username + "#" + message.author.discriminator);
+
+            let DATE = new Date(message.createdTimestamp);
+
             message.reply("Welcome " + message.author.username);
-            await markPresent(message.author.username + "#" + message.author.discriminator);
+            await markPresent(message.author.username + "#" + message.author.discriminator, DATE);
 
             let ping = "";
             for (let i of curr_attendees.attendees_id) {
@@ -36,9 +39,8 @@ export default function createArrivalBot(curr_attendees) {
 
             if (!curr_attendees.findAttendee(message.author.id)) {
                 await logPing(false, message.author.username + "#" + message.author.discriminator);
+                curr_attendees.addAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
             }
-
-            curr_attendees.addAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
         }
     });
 

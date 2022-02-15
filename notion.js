@@ -81,11 +81,11 @@ async function createPage(date) {
   }
 }
 
-export async function markPresent(tag) {
-  const DATE = new Date(Date.now());
+export async function markPresent(tag, DATE) {
   const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
   const day = DATE.getDay();
   const time = DATE.getHours();
+
   const user = await getUser(tag);
   let currPage = await getCurrPage(date);
 

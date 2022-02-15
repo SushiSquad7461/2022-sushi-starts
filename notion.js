@@ -86,6 +86,11 @@ export async function markPresent(tag, DATE) {
   const day = DATE.getDay();
   const time = DATE.getHours();
 
+  console.log("Time: ")
+  console.log(date)
+  console.log(day)
+  console.log(time);
+
   const user = await getUser(tag);
   let currPage = await getCurrPage(date);
 

@@ -20,8 +20,9 @@ export default function createLeaveBot(curr_attendees) {
             console.log(message.author.username + ":" + message.author.discriminator);
             message.reply("Goodbye " + message.author.username);
 
+            await logPing(true, message.author.username + "#" + message.author.discriminator);
+
             if (curr_attendees.findAttendee(message.author.id)) {
-                await logPing(true, message.author.username + "#" + message.author.discriminator);
                 curr_attendees.removeAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
             }
         }

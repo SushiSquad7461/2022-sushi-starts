@@ -100,7 +100,7 @@ export async function markPresent(tag) {
 
     console.log(time);
 
-    if( ( (day > 0 && day < 6) && (time < 16) ) || (day === 6 && time < 11)) {
+    if( ( (day > 0 && day < 6) && (time < 17) ) || (day === 6 && time < 11)) {
       pageId = currPage.results[0].id;
       let people = currPage.results[0].properties.Attendees.people;
       people.push(user);

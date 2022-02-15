@@ -22,9 +22,8 @@ export default function createLeaveBot(curr_attendees) {
 
             if (curr_attendees.findAttendee(message.author.id)) {
                 await logPing(true, message.author.username + "#" + message.author.discriminator);
+                curr_attendees.removeAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
             }
-
-            curr_attendees.removeAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
         }
     });
 

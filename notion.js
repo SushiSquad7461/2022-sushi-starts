@@ -88,15 +88,19 @@ export async function markPresent(tag) {
   const time = DATE.getHours();
   const user = await getUser(tag);
   let currPage = await getCurrPage(date);
+
   if( currPage.results.length === 0) {
     await createPage(date);
     currPage = await getCurrPage(date);
   }
+
   //console.log(currPage);
   let pageId = currPage.results[0].id;
   try {
-    if(((day>0 && day<6)&&(time<16)) || (day===6 && time<11))
-    {
+
+    console.log(time);
+
+    if( ( (day > 0 && day < 6) && (time < 16) ) || (day === 6 && time < 11)) {
       pageId = currPage.results[0].id;
       let people = currPage.results[0].properties.Attendees.people;
       people.push(user);

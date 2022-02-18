@@ -26,7 +26,7 @@ export default function createArrivalBot(curr_attendees) {
             message.reply("Welcome " + message.author.username);
             await markPresent(message.author.username + "#" + message.author.discriminator, date);
 
-            const ping = curr_attendees.attendees_id.map(id => `<@${id}>`).join(" ");
+            let ping = curr_attendees.attendees_id.map(id => `<@${id}>`).join(" ");
 
             if (ping === "") {
                 ping = "No current attendees";

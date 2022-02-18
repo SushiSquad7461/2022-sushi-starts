@@ -31,7 +31,7 @@ export default function createArrivalBot(curr_attendees) {
             if (ping === "") {
                 ping = "No current attendees";
             } else {
-                const messageContentWithoutPing = message.content.replace(`<@${client.user.id}>`, "");
+                const messageContentWithoutPing = message.content.replace(`<@!${client.user.id}>`, "");
 
                 // keep message content first so people see that first on their phone notifications
                 ping = `${messageContentWithoutPing} ${ping}`;

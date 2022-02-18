@@ -17,22 +17,24 @@ export default function createArrivalBot(curr_attendees) {
     });
 
     client.on('messageCreate', async (message) => {
-        if (message.mentions.has(client.user)) {
+        if (message.mentions.has(client.user) && message.author !== client.user) {
             console.log("User is arriving");
             console.log(message.author.username + "#" + message.author.discriminator);
 
-            let DATE = new Date(message.createdTimestamp);
+            const date = new Date(message.createdTimestamp);
 
             message.reply("Welcome " + message.author.username);
-            await markPresent(message.author.username + "#" + message.author.discriminator, DATE);
+            await markPresent(message.author.username + "#" + message.author.discriminator, date);
 
-            let ping = "";
-            for (let i of curr_attendees.attendees_id) {
-                ping += `<@${i}> `
-            }
+            const ping = curr_attendees.attendees_id.map(id => `<@${id}>`).join(" ");
 
             if (ping === "") {
                 ping = "No current attendees";
+            } else {
+                const messageContentWithoutPing = message.content.replace(`<@${client.user.id}>`, "");
+
+                // keep message content first so people see that first on their phone notifications
+                ping = `${messageContentWithoutPing} ${ping}`;
             }
 
             message.reply(ping);

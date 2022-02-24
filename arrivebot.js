@@ -37,7 +37,9 @@ export default function createArrivalBot(curr_attendees) {
                 ping = `${messageContentWithoutPing} ${ping}`;
             }
 
-            message.reply(ping);
+            if (message.content.includes("door")) {
+                message.reply(ping);
+            }
 
             if (!curr_attendees.findAttendee(message.author.id)) {
                 await logPing(false, message.author.username + "#" + message.author.discriminator);

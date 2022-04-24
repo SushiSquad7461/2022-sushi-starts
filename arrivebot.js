@@ -10,9 +10,8 @@ const doors= {
     DOOR3: 3,
     }
 let client;
-let guild;
 let ready = true;
-let voiceChannelID = null;
+let voiceChannelID = 584610536671543320;
 
 export default function createArrivalBot(curr_attendees) {
     client = new Client({
@@ -77,10 +76,10 @@ export default function createArrivalBot(curr_attendees) {
                             player.on('error', error => {
                                 console.error('Error:', error.message, 'with track', error.resource.metadata.title);
                             });
-            
+
                             const resource = createAudioResource(createReadStream("doorbell.mp3"), {inlineVolume: true});
                             resource.volume.setVolume(1);
-            
+
                             connection.subscribe(player);
                             player.play(resource);
                             setTimeout(() => {
@@ -96,14 +95,14 @@ export default function createArrivalBot(curr_attendees) {
                                         case doors.DOOR4:
                                             whichDoor = createAudioResource(createReadStream("door 4.mp3"), {inlineVolume: true});
                                             break
-                                    }   
+                                    }
                                     whichDoor.volume.setVolume(1);
                                     player.play(whichDoor);
-            
+
                                 } catch(ex) {
                                     console.log(ex);
                                 }
-                                
+
                             }, 3000);
                             setTimeout(() => {
                                 try {
@@ -112,13 +111,11 @@ export default function createArrivalBot(curr_attendees) {
                                     console.log(ex);
                                 }
                                 ready = true;
-                            }, 6000);                
+                            }, 6000);
                         } catch(ex) {
                             console.log(ex);
                         }
                     }
-                    
-                
                 }
             }
 
@@ -133,7 +130,7 @@ export default function createArrivalBot(curr_attendees) {
                 }
                 voiceChannelID = message.member.voice.channelId;
                 message.reply("successfully joined voice channel " + message.member.voice.channel.name);
-            }                   
+            }
         }
     });
 

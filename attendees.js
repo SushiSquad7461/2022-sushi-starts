@@ -1,9 +1,9 @@
 import { writeFileSync, readFileSync } from "fs";
-const fileLocation = "/attendees.json";
+const fileLocation = "./attendees.json";
 
 export default class Attendees {
     constructor() {
-        const data = readFileSync(fileLocation, "utf8");
+        const data = JSON.parse(readFileSync(fileLocation, "utf8"));
         this.attendees_names = [];
         this.attendees_id = [];
 
@@ -35,7 +35,7 @@ export default class Attendees {
             write_data.push({name: this.attendees_names[i], id: this.attendees_id[i]});
         }
 
-        writeFileSync(fileLocation, write_data);
+        writeFileSync(fileLocation, JSON.stringify(write_data));
     }
     get getAttendeeIds() {
         return this.attendees_id;

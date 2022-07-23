@@ -22,9 +22,14 @@ async function getUser(tag) {
   }
   catch(error) {
     console.error(error.body)
-  }  
-  const userinfo = await notion.pages.retrieve({page_id: pageId});
-  return userinfo.properties["Notion User"]["people"][0];
+  } 
+  
+  if (pageId != null) {
+    const userinfo = await notion.pages.retrieve({page_id: pageId});
+    return userinfo.properties["Notion User"]["people"][0];
+  } else {
+    return null;
+  }
 }
 
 async function getCurrPage(date) {
@@ -93,6 +98,11 @@ export async function markPresent(tag, DATE) {
 
   const user = await getUser(tag);
   let currPage = await getCurrPage(date);
+
+  if (user == null) {
+    console.log("THIS USER IS NOT IN ROSTER COULD NOT MARK AS ATTENDED");
+    return;
+  }
 
   if( currPage.results.length === 0) {
     await createPage(date);
@@ -179,6 +189,12 @@ export async function getAttendees() {
 
 export async function logPing(leaving, tag) {
   const user = await getUser(tag);
+
+  if (user == null) {
+    console.log("user is not in team roster");
+    return;
+  }
+  
   try {
     const response = await notion.pages.create({
       parent: {

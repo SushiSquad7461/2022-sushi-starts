@@ -20,8 +20,6 @@ export default class Attendees {
                     this.attendees_id.push(i.id);
                 }
             }
-
-            console.log(this.attendees_names);
         });
     }
     addAttendee(name, id) {

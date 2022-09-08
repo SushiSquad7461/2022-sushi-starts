@@ -1,16 +1,28 @@
-import { writeFileSync, readFileSync } from "fs";
+import { writeFileSync, readFile } from "fs";
 const fileLocation = "./attendees.json";
 
 export default class Attendees {
     constructor() {
-        const data = JSON.parse(readFileSync(fileLocation, "utf8"));
         this.attendees_names = [];
         this.attendees_id = [];
 
-        for (let i of data) {
-            this.attendees_names.push(i.name);
-            this.attendees_id.push(i.id);
-        }
+        readFile(fileLocation, "utf8", (err, data) => {
+            if (err) {
+                console.error(`Error reading attendance file: ${err}`);
+                return;
+            }
+
+            if (data.length > 0) {
+                const savedAttendanceData = JSON.parse(data);
+
+                for (let i of savedAttendanceData) {
+                    this.attendees_names.push(i.name);
+                    this.attendees_id.push(i.id);
+                }
+            }
+
+            console.log(this.attendees_names);
+        });
     }
     addAttendee(name, id) {
         this.attendees_names.push(name);

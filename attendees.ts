@@ -1,20 +1,28 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
+import { writeFileSync, readFile } from "fs";
 const fileLocation = "./attendees.json";
-class Attendees {
-    attendees_names;
-    attendees_id;
+
+export type Attendee = {
+    id: string;
+    name: string;
+};
+
+export default class Attendees {
+    public attendees_names: string[];
+    public attendees_id: string[];
+
     constructor() {
         this.attendees_names = [];
         this.attendees_id = [];
-        (0, fs_1.readFile)(fileLocation, "utf8", (err, data) => {
+
+        readFile(fileLocation, "utf8", (err, data) => {
             if (err) {
                 console.error(`Error reading attendance file: ${err}`);
                 return;
             }
+
             if (data.length > 0) {
                 const savedAttendanceData = JSON.parse(data);
+
                 for (let i of savedAttendanceData) {
                     this.attendees_names.push(i.name);
                     this.attendees_id.push(i.id);
@@ -22,34 +30,32 @@ class Attendees {
             }
         });
     }
-    addAttendee(name, id) {
+    addAttendee(name: string, id: string) {
         this.attendees_names.push(name);
         this.attendees_id.push(id);
         this.writeToFile();
     }
-    removeAttendee(name, id) {
+    removeAttendee(name: string, id: string) {
         this.attendees_names = this.attendees_names.filter(value => value === name);
         this.attendees_id = this.attendees_names.filter(value => value === id);
         this.writeToFile();
     }
-    findAttendee(id) {
+    findAttendee(id: string) {
         for (let i of this.attendees_id) {
-            if (i === id) {
-                return true;
-            }
+            if (i === id) { return true; }
         }
         return false;
     }
     writeToFile() {
         let write_data = [];
+
         for (let i = 0; i < this.attendees_id.length; ++i) {
-            write_data.push({ name: this.attendees_names[i], id: this.attendees_id[i] });
+            write_data.push({name: this.attendees_names[i], id: this.attendees_id[i]});
         }
-        (0, fs_1.writeFileSync)(fileLocation, JSON.stringify(write_data));
+
+        writeFileSync(fileLocation, JSON.stringify(write_data));
     }
     get getAttendeeIds() {
         return this.attendees_id;
     }
 }
-exports.default = Attendees;
-//# sourceMappingURL=attendees.js.map

@@ -1,8 +1,8 @@
-import 'dotenv/config'
+import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
-import { markPresent, getAttendees, logPing} from "./notion.js";
+import { logPing } from "./notion.js";
 
-export default function createLeaveBot(curr_attendees) {
+export default function createLeaveBot(curAttendees) {
     const client = new Client({ 
         intents: [
             Intents.FLAGS.GUILDS, 
@@ -14,19 +14,23 @@ export default function createLeaveBot(curr_attendees) {
           console.log(`Logged in as ${client.user.tag}!`);
     });
 
-    client.on('messageCreate', async message => {
+    client.on('messageCreate', async (message) => {
         if (message.mentions.has(client.user)) {
-            console.log("User is leaving");
-            console.log(message.author.username + ":" + message.author.discriminator);
-            message.reply("Goodbye " + message.author.username);
+            const user = `${message.author.username}#${message.author.discriminator}`;
 
-            await logPing(true, message.author.username + "#" + message.author.discriminator);
+            console.log(`User leaving: ${user}`);
 
-            if (curr_attendees.findAttendee(message.author.id)) {
-                curr_attendees.removeAttendee(message.author.username + "#" + message.author.discriminator, message.author.id);
+            message.reply(`Goodbye, \`${message.author.username}\`.`);
+
+            await logPing(true, user);
+
+            if (curAttendees.findAttendee(message.author.id)) {
+                curAttendees.removeAttendee(user, message.author.id);
             }
         }
     });
 
     client.login(process.env.LEAVE_CLIENT_TOKEN);
+
+    return client;
 }

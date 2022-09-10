@@ -1,14 +1,12 @@
-import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
-import { markPresent, getAttendees, logPing} from "./notion.js";
-let client;
+import { markPresent, logPing } from "./notion.js";
 
-export default function createArrivalBot(curAttendees) {
-    client = new Client({
+export default function createArrivalBot(token, attendees) {
+    const client = new Client({
         intents: [
             Intents.FLAGS.GUILDS,
-            Intents.FLAGS.GUILD_MESSAGES
-        ]
+            Intents.FLAGS.GUILD_MESSAGES,
+        ],
     });
 
     client.on('ready', () => {
@@ -20,7 +18,7 @@ export default function createArrivalBot(curAttendees) {
             const user = `${message.author.username}#${message.author.discriminator}`;
             const date = new Date(message.createdTimestamp);
 
-            let ping = curAttendees.attendees_id.map(id => `<@${id}>`).join(" ");
+            let ping = attendees.attendees_id.map(id => `<@${id}>`).join(" ");
 
             console.log(`User arriving: ${user}`);
             await markPresent(message.author.username + "#" + message.author.discriminator, date);
@@ -40,12 +38,14 @@ export default function createArrivalBot(curAttendees) {
                 message.reply(`Welcome, \`${message.author.username}\`. If you need to be let in, please specify which door you're at.`);
             }
 
-            if (!curAttendees.findAttendee(message.author.id)) {
+            if (!attendees.findAttendee(message.author.id)) {
                 await logPing(false, user);
-                curAttendees.addAttendee(user, message.author.id);
+                attendees.addAttendee(user, message.author.id);
             }
         }
     });
 
-    client.login(process.env.ARRIVE_CLIENT_TOKEN);
+    client.login(token);
+
+    return client;
 }

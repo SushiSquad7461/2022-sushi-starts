@@ -1,17 +1,16 @@
-import 'dotenv/config';
 import { Client, Intents } from 'discord.js';
 import { logPing } from "./notion.js";
 
-export default function createLeaveBot(curAttendees) {
+export default function createLeaveBot(token, attendees) {
     const client = new Client({ 
         intents: [
             Intents.FLAGS.GUILDS, 
             Intents.FLAGS.GUILD_MESSAGES,
-        ] 
+        ],
     });
     
     client.on('ready', () => {
-          console.log(`Logged in as ${client.user.tag}!`);
+        console.log(`Logged in as ${client.user.tag}!`);
     });
 
     client.on('messageCreate', async (message) => {
@@ -24,13 +23,13 @@ export default function createLeaveBot(curAttendees) {
 
             await logPing(true, user);
 
-            if (curAttendees.findAttendee(message.author.id)) {
-                curAttendees.removeAttendee(user, message.author.id);
+            if (attendees.findAttendee(message.author.id)) {
+                attendees.removeAttendee(user, message.author.id);
             }
         }
     });
 
-    client.login(process.env.LEAVE_CLIENT_TOKEN);
+    client.login(token);
 
     return client;
 }

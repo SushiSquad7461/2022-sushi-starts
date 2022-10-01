@@ -24,7 +24,7 @@ export default function createArrivalBot(token, attendees) {
             await markPresent(message.author.username + "#" + message.author.discriminator, date);
 
             if (ping === "") {
-                ping = `Welcome, \`${message.author.username}\`. There is no one here yet.`;
+                ping = `Welcome, <@${message.author.id}>. There is no one here yet.`;
             } else {
                 const messageContentWithoutPing = message.content.replace(`<@${client.user.id}>`, "").trim();
 
@@ -35,7 +35,7 @@ export default function createArrivalBot(token, attendees) {
             if (message.content.includes("door") || message.content.includes("inner")) {
                 message.reply(ping);
             } else {
-                message.reply(`Welcome, \`${message.author.username}\`. If you need to be let in, please specify which door you're at.`);
+                message.reply(`Welcome, <@${message.author.id}>. If you need to be let in, please specify which door you're at.`);
             }
 
             if (!attendees.findAttendee(message.author.id)) {

@@ -19,7 +19,7 @@ export default function createLeaveBot(token, attendees) {
 
             console.log(`User leaving: ${user}`);
 
-            message.reply(`Goodbye, \`${message.author.username}\`.`);
+            message.reply(`Goodbye, <@${message.author.id}>.`);
 
             await logPing(true, user);
 

@@ -1,5 +1,6 @@
 import { Client } from "@notionhq/client"
 import "dotenv/config";
+import { updateUsers } from "./orderbot.js";
 
 const ORDERFORMID = process.env.ORDER_FORM_DATABASE_ID;
 const ROSTERID = process.env.ROSTER_ID;
@@ -32,9 +33,9 @@ export default class OrderForm {
 
         for (let i of orders.results) {
             if (this.idTimesMap[i.id] == undefined || new Date(i.last_edited_time).getTime() != new Date(this.idTimesMap[i.id]).getTime()) {
-                console.log("UYPDATED");
-                console.log(await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content));
-            }
+                let name = await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content);
+                updateUsers(name, i.properties);
+             }
         }
 
         this.setTimes(orders);

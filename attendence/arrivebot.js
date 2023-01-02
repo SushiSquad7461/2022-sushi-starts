@@ -17,7 +17,7 @@ export default function createArrivalBot(curAttendees) {
     });
 
     client.on('messageCreate', async (message) => {
-        if (message.mentions.has(client.user) && message.author !== client.user && message.author.username === "KTOmega") {
+        if (message.mentions.has(client.user) && message.author !== client.user) {
             const user = `${message.author.username}#${message.author.discriminator}`;
             const date = new Date(message.createdTimestamp);
 

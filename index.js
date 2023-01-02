@@ -1,8 +1,12 @@
-import createArrivalBot from "./arrivebot.js";
-import Attendees from "./attendees.js";
-import createLeaveBot from "./leavebot.js";
-import { getAttendees } from "./notion.js";
+import createArrivalBot from "./attendence/arrivebot.js";
+import Attendees from "./attendence/attendees.js";
+import createLeaveBot from "./attendence/leavebot.js";
+import { createOrderBot } from "./orders/orderbot.js";
+import OrderForm from "./orders/orderformnotion.js";
 
 let curr_attendees = new Attendees();
 createArrivalBot(curr_attendees);
 createLeaveBot(curr_attendees);
+
+new OrderForm();
+createOrderBot();

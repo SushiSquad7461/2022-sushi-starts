@@ -22,22 +22,26 @@ export default class Attendees {
             }
         });
     }
+
     addAttendee(name, id) {
         this.attendees_names.push(name);
         this.attendees_id.push(id);
         this.writeToFile();
     }
+
     removeAttendee(name, id) {
         this.attendees_names = this.attendees_names.filter(value => value === name);
         this.attendees_id = this.attendees_names.filter(value => value === id);
         this.writeToFile();
     }
+
     findAttendee(id) {
         for (let i of this.attendees_id) {
             if (i === id) { return true; }
         }
         return false;
     }
+
     writeToFile() {
         let write_data = [];
 
@@ -47,6 +51,7 @@ export default class Attendees {
 
         writeFileSync(fileLocation, JSON.stringify(write_data));
     }
+
     get getAttendeeIds() {
         return this.attendees_id;
     }

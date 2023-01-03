@@ -3,6 +3,7 @@ import { Client, Intents } from 'discord.js';
 
 let client;
 const ORDER_CHANNEL_ID = process.env.ORDER_CHANNEL_ID;
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 export function createOrderBot() {
     client = new Client({
@@ -17,30 +18,24 @@ export function createOrderBot() {
         console.log(`Logged in as ${client.user.tag}!`);
     });
 
-    client.on('messageCreate', async (message) => {
-        if (message.mentions.has(client.user) && message.author !== client.user) {
-         message.reply(`Welcome dez nutz, \`${message.author.username}\`.`);
-        }
-    });
-
     client.login(process.env.ORDER_CLIENT_TOKEN);
 }
 
 export async function updateUsers(userTag, orderInfo) {
     let userId = "";
-    (await client.guilds.cache.get("584610536671543309").members.fetch()).forEach(x => {
-        if(x.user.username + "#" + x.user.discriminator == userTag) {
-            userId = x.id;
-        }
-    }
-    );
 
-    console.log(orderInfo);
+    (await client.guilds.cache.get(GUILD_ID).members.fetch())
+        .forEach(
+            x => {
+                if(x.user.username + "#" + x.user.discriminator == userTag) {
+                    userId = x.id;
+                }
+            }
+    );
 
     const orderName = orderInfo["Product Name"]["rich_text"][0].text.content;
     const status = orderInfo["Tracking #"].status.name;
-
-    let message = `Your Order of \`${orderName}\` has been updated, the new status is \`${status}\``;
+    const message = `Your Order of \`${orderName}\` has been updated, the new status is \`${status}\``;
 
     client.channels.cache.get(ORDER_CHANNEL_ID).send(`<@${userId}> ${message}`);
 }

@@ -49,13 +49,13 @@ export default class OrderForm {
         let pageId;
         try {
             const response = await NOTION.databases.query({
-              database_id: ROSTERID,
-              filter: {
+                database_id: ROSTERID,
+                filter: {
                     "property": 'Name',
                     "text": {
-                      "contains": name,
+                        "contains": name,
                     }
-                  },
+                },
             });
             pageId = response.results[0].id;
         } catch(error) {

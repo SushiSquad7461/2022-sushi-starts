@@ -33,9 +33,14 @@ export async function updateUsers(userTag, orderInfo) {
             }
     );
 
-    const orderName = orderInfo["Product Name"]["rich_text"][0].text.content;
-    const status = orderInfo["Tracking #"].status.name;
+    const orderName = orderInfo["Product Name"]["rich_text"][0]?.text?.content;
+    const status = orderInfo["Tracking #"]?.status?.name;
     const message = `Your Order of \`${orderName}\` has been updated, the new status is \`${status}\``;
+
+    if (!orderName || !status) {
+        console.warn(`OrderBot: Order name or status were null.`);
+        return;
+    }
 
     client.channels.cache.get(ORDER_CHANNEL_ID).send(`<@${userId}> ${message}`);
 }

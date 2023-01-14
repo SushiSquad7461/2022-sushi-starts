@@ -27,42 +27,46 @@ export default class OrderForm {
     }
 
     async checkForOrderFormUpdate() {
-        const orders = await NOTION.databases.query({
-            database_id: ORDERFORMID,
-        });
+        try {
+            const orders = await NOTION.databases.query({
+                database_id: ORDERFORMID,
+            });
 
-        for (let i of orders.results) {
-            if (this.idTimesMap[i.id] == undefined || new Date(i.last_edited_time).getTime() != new Date(this.idTimesMap[i.id]).getTime()) {
-                let name = await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content);
-                updateUsers(name, i.properties);
-             }
+            for (let i of orders.results) {
+                if (this.idTimesMap[i.id] == undefined || new Date(i.last_edited_time).getTime() != new Date(this.idTimesMap[i.id]).getTime()) {
+                    let name = await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content);
+                    updateUsers(name, i.properties);
+                }
+            }
+
+            this.setTimes(orders);
+        } catch (e) {
+            console.warn(`An error occurred when checking for order form updates.`, e);
         }
-
-        this.setTimes(orders);
     }
 
     async getDiscordTagBasedOnName(name) {
         let pageId;
         try {
-          const response = await NOTION.databases.query({
-            database_id: ROSTERID,
-            filter: {
-                  "property": 'Name',
-                  "text": {
-                    "contains": name,
-                  }
-                },
-          });
-          pageId = response.results[0].id;
+            const response = await NOTION.databases.query({
+              database_id: ROSTERID,
+              filter: {
+                    "property": 'Name',
+                    "text": {
+                      "contains": name,
+                    }
+                  },
+            });
+            pageId = response.results[0].id;
         } catch(error) {
-          console.error(error.body);
+            console.error(error.body);
         } 
         
         if (pageId != null) {
-          const userinfo = await NOTION.pages.retrieve({page_id: pageId});
-          return userinfo.properties["Discord Tag"].rich_text[0].text.content;
+            const userinfo = await NOTION.pages.retrieve({page_id: pageId});
+            return userinfo.properties["Discord Tag"].rich_text[0].text.content;
         } else {
-          return null;
+            return null;
         }
     }
 }

@@ -1,7 +1,7 @@
 import "dotenv/config";
-import createArrivalBot from "./arrivebot.js";
-import Attendees from "./attendees.js";
-import createLeaveBot from "./leavebot.js";
+import createArrivalBot from "./attendance/arrivebot.js";
+import Attendees from "./attendance/attendees.js";
+import createLeaveBot from "./attendance/leavebot.js";
 import { createOrderBot } from "./orders/orderbot.js";
 import OrderForm from "./orders/orderformnotion.js";
 

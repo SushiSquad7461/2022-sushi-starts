@@ -2,8 +2,6 @@ import { Client } from "@notionhq/client"
 import { config } from "../Environment.js";
 import { updateUsers } from "./orderbot.js";
 
-const ORDERFORMID = config.notion.orderFormDatabaseId;
-const ROSTERID = config.notion.rosterDatabaseId;
 const NOTION = new Client({ auth: config.tokens.notionClientKey });
 
 export default class OrderForm {
@@ -15,7 +13,7 @@ export default class OrderForm {
 
     async initTimes() {
         const orders = await NOTION.databases.query({
-            database_id: ORDERFORMID,
+            database_id: config.notion.orderFormDatabaseId,
         }); 
         this.setTimes(orders); 
     }
@@ -29,7 +27,7 @@ export default class OrderForm {
     async checkForOrderFormUpdate() {
         try {
             const orders = await NOTION.databases.query({
-                database_id: ORDERFORMID,
+                database_id: config.notion.orderFormDatabaseId,
             });
 
             for (let i of orders.results) {
@@ -49,7 +47,7 @@ export default class OrderForm {
         let pageId;
         try {
             const response = await NOTION.databases.query({
-                database_id: ROSTERID,
+                database_id: config.notion.rosterDatabaseId,
                 filter: {
                     "property": 'Name',
                     "text": {

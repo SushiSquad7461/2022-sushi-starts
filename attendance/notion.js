@@ -3,15 +3,11 @@ import { config } from "../Environment.js";
 
 const notion = new Client({ auth: config.tokens.notionClientKey });
 
-const ATTENDENCEID = config.notion.attendanceDatabaseId;
-const ROSTERID = config.notion.rosterDatabaseId;
-const LOGID = config.notion.attendanceLogDatabaseId;
-
 async function getUser(tag) {
   let pageId;
   try {
     const response = await notion.databases.query({
-      database_id: ROSTERID,
+      database_id: config.notion.rosterDatabaseId,
       filter: {
             "property": 'Discord Tag',
             "text": {
@@ -36,7 +32,7 @@ async function getUser(tag) {
 async function getCurrPage(date) {
   try {
     const currPage = await notion.databases.query({
-      database_id: ATTENDENCEID,
+      database_id: config.notion.attendanceDatabaseId,
       filter: {
         "property": 'Name',
         "text": {
@@ -55,7 +51,7 @@ async function createPage(date) {
   try {
     const response = await notion.pages.create({
       parent: {
-        database_id: ATTENDENCEID,
+        database_id: config.notion.attendanceDatabaseId,
       },
       icon: {
         type: 'emoji', emoji: '📝'
@@ -152,7 +148,7 @@ export async function getAttendees() {
     console.log("IN")
   try {
     const currPage = await notion.databases.query({
-      database_id: ATTENDENCEID,
+      database_id: config.notion.attendanceDatabaseId,
       filter: {
         "property": 'Name',
         "text": {
@@ -169,7 +165,7 @@ export async function getAttendees() {
 
     for (let i of people) {
         const person = await notion.databases.query({
-            database_id: ROSTERID,
+            database_id: config.notion.rosterDatabaseId,
             filter: {
                 "property": 'Notion User',
                 "people": {
@@ -199,7 +195,7 @@ export async function logPing(leaving, tag) {
   try {
     const response = await notion.pages.create({
       parent: {
-        database_id: LOGID,
+        database_id: config.notion.attendanceLogDatabaseId,
       },
       properties: {
         Leaving: {

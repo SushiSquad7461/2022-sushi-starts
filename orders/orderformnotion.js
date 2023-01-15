@@ -1,11 +1,11 @@
 import { Client } from "@notionhq/client"
-import { config } from "../Environment.js";
-import { updateUsers } from "./orderbot.js";
+import { config } from "../dist/Environment.js";
 
 const NOTION = new Client({ auth: config.tokens.notionClientKey });
 
 export default class OrderForm {
-    constructor() {
+    constructor(orderBot) {
+        this.bot = orderBot;
         this.idTimesMap = {};
         setInterval(() => this.checkForOrderFormUpdate(this), config.notion.orderFormPollInterval);
         this.initTimes();
@@ -33,7 +33,7 @@ export default class OrderForm {
             for (let i of orders.results) {
                 if (this.idTimesMap[i.id] == undefined || new Date(i.last_edited_time).getTime() != new Date(this.idTimesMap[i.id]).getTime()) {
                     let name = await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content);
-                    updateUsers(name, i.properties);
+                    this.bot.updateUsers(name, i.properties);
                 }
             }
 

@@ -1,7 +1,7 @@
 {
     "discord": {
-        "guildId": 584610536671543309,
-        "orderChannelId": 1011202136564047882
+        "guildId": "584610536671543309",
+        "orderChannelId": "1011202136564047882"
     },
     "notion": {
         "attendanceDatabaseId": "3a5e2a9c71d845b38f07d9da2da8649d",

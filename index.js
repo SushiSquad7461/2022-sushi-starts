@@ -1,8 +1,8 @@
-import { config } from "./Environment.js";
+import { config } from "./dist/Environment.js";
 import createArrivalBot from "./attendance/arrivebot.js";
 import Attendees from "./attendance/attendees.js";
 import createLeaveBot from "./attendance/leavebot.js";
-import { createOrderBot } from "./orders/orderbot.js";
+import { OrderBot } from "./orders/orderbot.js";
 import OrderForm from "./orders/orderformnotion.js";
 
 if (!config.tokens.arriveBotToken || !config.tokens.leaveBotToken || !config.tokens.orderBotToken) {
@@ -14,5 +14,5 @@ const attendees = new Attendees();
 createArrivalBot(config.tokens.arriveBotToken, attendees);
 createLeaveBot(config.tokens.leaveBotToken, attendees);
 
-new OrderForm();
-createOrderBot(config.tokens.orderBotToken);
+const orderBot = new OrderBot({ token: config.tokens.orderBotToken, name: "OrderBot" });
+new OrderForm(orderBot);

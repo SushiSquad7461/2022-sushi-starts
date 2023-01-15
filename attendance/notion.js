@@ -1,5 +1,5 @@
 import { Client } from "@notionhq/client"
-import { config } from "../Environment.js";
+import { config } from "../dist/Environment.js";
 
 const notion = new Client({ auth: config.tokens.notionClientKey });
 

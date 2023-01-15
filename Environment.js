@@ -1,0 +1,18 @@
+import "dotenv/config";
+import configFromJson from "./config.json" assert { type: "json" };
+
+export const config = {
+    discord: {
+        ...configFromJson.discord,
+    },
+    notion: {
+        ...configFromJson.notion,
+        orderFormPollInterval: 3000,
+    },
+    tokens: {
+        arriveBotToken: process.env.ARRIVE_CLIENT_TOKEN,
+        leaveBotToken: process.env.LEAVE_CLIENT_TOKEN,
+        notionClientKey: process.env.NOTION_KEY,
+        orderBotToken: process.env.ORDER_CLIENT_TOKEN,
+    },
+};

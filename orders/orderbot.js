@@ -1,11 +1,9 @@
-import 'dotenv/config';
+import { config } from "../Environment.js";
 import { Client, Intents } from 'discord.js';
 
 let client;
-const ORDER_CHANNEL_ID = process.env.ORDER_CHANNEL_ID;
-const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
-export function createOrderBot() {
+export function createOrderBot(token) {
     client = new Client({
         intents: [
             Intents.FLAGS.GUILDS,
@@ -18,13 +16,13 @@ export function createOrderBot() {
         console.log(`Logged in as ${client.user.tag}!`);
     });
 
-    client.login(process.env.ORDER_CLIENT_TOKEN);
+    client.login(token);
 }
 
 export async function updateUsers(userTag, orderInfo) {
     let userId = "";
 
-    (await client.guilds.cache.get(GUILD_ID).members.fetch())
+    (await client.guilds.cache.get(config.discord.guildId).members.fetch())
         .forEach(
             x => {
                 if(x.user.username + "#" + x.user.discriminator == userTag) {
@@ -42,5 +40,5 @@ export async function updateUsers(userTag, orderInfo) {
         return;
     }
 
-    client.channels.cache.get(ORDER_CHANNEL_ID).send(`<@${userId}> ${message}`);
+    client.channels.cache.get(config.discord.orderChannelId).send(`<@${userId}> ${message}`);
 }

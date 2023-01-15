@@ -1,15 +1,15 @@
 import { Client } from "@notionhq/client"
-import "dotenv/config";
+import { config } from "../Environment.js";
 import { updateUsers } from "./orderbot.js";
 
-const ORDERFORMID = process.env.ORDER_FORM_DATABASE_ID;
-const ROSTERID = process.env.ROSTER_ID;
-const NOTION = new Client({ auth: process.env.NOTION_KEY });
+const ORDERFORMID = config.notion.orderFormDatabaseId;
+const ROSTERID = config.notion.rosterDatabaseId;
+const NOTION = new Client({ auth: config.tokens.notionClientKey });
 
 export default class OrderForm {
     constructor() {
         this.idTimesMap = {};
-        setInterval(() => this.checkForOrderFormUpdate(this), 3000);
+        setInterval(() => this.checkForOrderFormUpdate(this), config.notion.orderFormPollInterval);
         this.initTimes();
     }
 

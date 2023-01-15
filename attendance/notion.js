@@ -1,10 +1,11 @@
 import { Client } from "@notionhq/client"
-import "dotenv/config";
-const notion = new Client({ auth: process.env.NOTION_KEY })
+import { config } from "../Environment.js";
 
-const ATTENDENCEID = process.env.NOTION_DATABASE_ID
-const ROSTERID = process.env.ROSTER_ID
-const LOGID = process.env.LOG_ID
+const notion = new Client({ auth: config.tokens.notionClientKey });
+
+const ATTENDENCEID = config.notion.attendanceDatabaseId;
+const ROSTERID = config.notion.rosterDatabaseId;
+const LOGID = config.notion.attendanceLogDatabaseId;
 
 async function getUser(tag) {
   let pageId;

@@ -6,45 +6,55 @@ const NOTION = new Client({ auth: config.tokens.notionClientKey });
 export default class OrderForm {
     constructor(orderBot) {
         this.bot = orderBot;
-        this.idTimesMap = {};
-        setInterval(() => this.checkForOrderFormUpdate(this), config.notion.orderFormPollInterval);
-        this.initTimes();
+        this.idTimesMap = {}; // Record<string, number>
+
+        this.initialSyncPromise = this.syncOrderForm(true);
+
+        this.syncPeriodic();
     }
 
-    async initTimes() {
-        const orders = await NOTION.databases.query({
-            database_id: config.notion.orderFormDatabaseId,
-        }); 
-        this.setTimes(orders); 
+    async syncPeriodic() {
+        await this.initialSyncPromise;
+
+        const startTime = new Date().getTime();
+        await this.syncOrderForm(false);
+        const endTime = new Date().getTime();
+
+        const elapsed = endTime - startTime;
+
+        this.timeout = setTimeout(this.syncPeriodic.bind(this), config.notion.orderFormPollInterval - elapsed);
     }
 
-    async setTimes(orders) {
-        for (let i of orders.results) {
-            this.idTimesMap[i.id] = i.last_edited_time;
-        }
-    }
-
-    async checkForOrderFormUpdate() {
+    async syncOrderForm(isFirstSync) {
         try {
             const orders = await NOTION.databases.query({
                 database_id: config.notion.orderFormDatabaseId,
             });
 
             for (let i of orders.results) {
-                if (this.idTimesMap[i.id] == undefined || new Date(i.last_edited_time).getTime() != new Date(this.idTimesMap[i.id]).getTime()) {
-                    let name = await this.getDiscordTagBasedOnName(i.properties.Name.title[0].text.content);
-                    this.bot.updateUsers(name, i.properties);
-                }
-            }
+                const pageLastEditedTime = new Date(i.last_edited_time).getTime();
 
-            this.setTimes(orders);
+                // Send a Discord message only after the first sync,
+                // and only if there is a new order form entry or an order form entry has changed.
+                if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
+                    const nameFromNotion = i.properties.Name.title[0]?.text?.content;
+
+                    if (!nameFromNotion) {
+                        console.warn(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
+                    } else {
+                        const name = await this.getDiscordTagBasedOnName(nameFromNotion);
+                        this.bot.updateUsers(name, i.properties);
+                    }
+                }
+
+                this.idTimesMap[i.id] = pageLastEditedTime;
+            }
         } catch (e) {
-            console.warn(`An error occurred when checking for order form updates.`, e);
+            console.warn(`Order form checker: An error occurred when checking for order form updates.`, e);
         }
     }
 
     async getDiscordTagBasedOnName(name) {
-        let pageId;
         try {
             const response = await NOTION.databases.query({
                 database_id: config.notion.rosterDatabaseId,
@@ -55,16 +65,22 @@ export default class OrderForm {
                     }
                 },
             });
-            pageId = response.results[0].id;
-        } catch(error) {
-            console.error(error.body);
-        } 
+
+            if (!response.results?.length) {
+                console.warn(`Order form checker: Could not find a roster entry for name "${name}".`);
+                return null;
+            }
+
+            const userRosterPageId = response.results[0].id;
         
-        if (pageId != null) {
-            const userinfo = await NOTION.pages.retrieve({page_id: pageId});
-            return userinfo.properties["Discord Tag"].rich_text[0].text.content;
-        } else {
-            return null;
+            if (userRosterPageId) {
+                const userinfo = await NOTION.pages.retrieve({ page_id: userRosterPageId });
+                return userinfo.properties["Discord Tag"].rich_text[0]?.text?.content ?? null;
+            }
+        } catch (e) {
+            console.warn(`Order form checker: Caught an error trying to find Discord tag for name "${name}".`, e);
         }
+
+        return null;
     }
 }

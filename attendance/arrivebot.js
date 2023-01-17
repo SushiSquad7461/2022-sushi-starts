@@ -20,7 +20,6 @@ export default function createArrivalBot(token, attendees) {
 
             let ping = attendees.attendees_id.map(id => `<@${id}>`).join(" ");
 
-            console.log(`User arriving: ${user}`);
             await markPresent(message.author.username + "#" + message.author.discriminator, date);
 
             if (ping === "") {

@@ -88,10 +88,7 @@ export async function markPresent(tag, DATE) {
   const day = DATE.getDay();
   const time = DATE.getHours();
 
-  console.log("Time: ")
-  console.log(date);
-  console.log(day);
-  console.log(time);
+  console.log("Time: ", date, day, time);
 
   const user = await getUser(tag);
   let currPage = await getCurrPage(date);
@@ -145,7 +142,6 @@ export async function markPresent(tag, DATE) {
 }
 
 export async function getAttendees() {
-    console.log("IN")
   try {
     const currPage = await notion.databases.query({
       database_id: config.notion.attendanceDatabaseId,

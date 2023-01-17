@@ -17,8 +17,6 @@ export default function createLeaveBot(token, attendees) {
         if (message.mentions.has(client.user)) {
             const user = `${message.author.username}#${message.author.discriminator}`;
 
-            console.log(`User leaving: ${user}`);
-
             message.reply(`Goodbye, <@${message.author.id}>.`);
 
             await logPing(true, user);

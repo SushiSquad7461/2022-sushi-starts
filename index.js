@@ -2,8 +2,8 @@ import { config } from "./dist/Environment.js";
 import createArrivalBot from "./attendance/arrivebot.js";
 import Attendees from "./attendance/attendees.js";
 import createLeaveBot from "./attendance/leavebot.js";
-import { OrderBot } from "./orders/orderbot.js";
-import OrderForm from "./orders/orderformnotion.js";
+import { OrderBot } from "./dist/orders/OrderBot.js";
+import OrderForm from "./dist/orders/OrderFormNotion.js";
 
 if (!config.tokens.arriveBotToken || !config.tokens.leaveBotToken || !config.tokens.orderBotToken) {
     console.error("The ARRIVE_CLIENT_TOKEN, LEAVE_CLIENT_TOKEN, and ORDER_CLIENT_TOKEN environment variables are required.");

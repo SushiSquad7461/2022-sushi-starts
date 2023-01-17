@@ -1,11 +1,11 @@
-import { Client, Intents } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import { logPing } from "./notion.js";
 
 export default function createLeaveBot(token, attendees) {
-    const client = new Client({ 
+    const client = new Client({
         intents: [
-            Intents.FLAGS.GUILDS, 
-            Intents.FLAGS.GUILD_MESSAGES,
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
         ],
     });
     

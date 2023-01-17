@@ -1,4 +1,4 @@
-import { Client, Intents } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 
 export class BaseSushiBot {
     protected client: Client;
@@ -12,9 +12,9 @@ export class BaseSushiBot {
     }) {
         this.client = new Client({
             intents: [
-                Intents.FLAGS.GUILDS,
-                Intents.FLAGS.GUILD_MESSAGES,
-                Intents.FLAGS.GUILD_MEMBERS,
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.GuildMembers,
             ],
         });
 

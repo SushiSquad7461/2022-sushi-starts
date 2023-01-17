@@ -1,19 +1,24 @@
 import { Client } from "@notionhq/client"
-import { config } from "../dist/Environment.js";
-
-const NOTION = new Client({ auth: config.tokens.notionClientKey });
+import { RichTextPropertyValue, TitlePropertyValue } from "@notionhq/client/build/src/api-types";
+import { config } from "../Environment.js";
+import { OrderBot } from "./OrderBot";
 
 export default class OrderForm {
-    constructor(orderBot) {
+    private bot: OrderBot;
+    private idTimesMap: Record<string, number>;
+    private initialSyncPromise: Promise<void>;
+    private notion: Client;
+
+    constructor(orderBot: OrderBot) {
         this.bot = orderBot;
-        this.idTimesMap = {}; // Record<string, number>
+        this.idTimesMap = {};
+        this.notion = new Client({ auth: config.tokens.notionClientKey });
 
         this.initialSyncPromise = this.syncOrderForm(true);
-
         this.syncPeriodic();
     }
 
-    async syncPeriodic() {
+    private async syncPeriodic(): Promise<void> {
         await this.initialSyncPromise;
 
         const startTime = new Date().getTime();
@@ -22,12 +27,12 @@ export default class OrderForm {
 
         const elapsed = endTime - startTime;
 
-        this.timeout = setTimeout(this.syncPeriodic.bind(this), config.notion.orderFormPollInterval - elapsed);
+        setTimeout(this.syncPeriodic.bind(this), config.notion.orderFormPollInterval - elapsed);
     }
 
-    async syncOrderForm(isFirstSync) {
+    private async syncOrderForm(isFirstSync: boolean) {
         try {
-            const orders = await NOTION.databases.query({
+            const orders = await this.notion.databases.query({
                 database_id: config.notion.orderFormDatabaseId,
             });
 
@@ -37,7 +42,8 @@ export default class OrderForm {
                 // Send a Discord message only after the first sync,
                 // and only if there is a new order form entry or an order form entry has changed.
                 if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
-                    const nameFromNotion = i.properties.Name.title[0]?.text?.content;
+                    const nameProperty = i.properties.Name as TitlePropertyValue | undefined;
+                    const nameFromNotion = nameProperty?.title[0]?.plain_text;
 
                     if (!nameFromNotion) {
                         console.warn(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
@@ -54,9 +60,9 @@ export default class OrderForm {
         }
     }
 
-    async getDiscordTagBasedOnName(name) {
+    private async getDiscordTagBasedOnName(name: string) {
         try {
-            const response = await NOTION.databases.query({
+            const response = await this.notion.databases.query({
                 database_id: config.notion.rosterDatabaseId,
                 filter: {
                     "property": 'Name',
@@ -66,16 +72,17 @@ export default class OrderForm {
                 },
             });
 
-            if (!response.results?.length) {
+            if (response.results.length === 0) {
                 console.warn(`Order form checker: Could not find a roster entry for name "${name}".`);
                 return null;
             }
 
-            const userRosterPageId = response.results[0].id;
+            const userRosterPageId = response.results[0]?.id;
         
-            if (userRosterPageId) {
-                const userinfo = await NOTION.pages.retrieve({ page_id: userRosterPageId });
-                return userinfo.properties["Discord Tag"].rich_text[0]?.text?.content ?? null;
+            if (userRosterPageId != null) {
+                const userRosterEntry = await this.notion.pages.retrieve({ page_id: userRosterPageId });
+                const userDiscordTag = userRosterEntry.properties["Discord Tag"] as RichTextPropertyValue | undefined;
+                return userDiscordTag?.rich_text[0]?.plain_text ?? null;
             }
         } catch (e) {
             console.warn(`Order form checker: Caught an error trying to find Discord tag for name "${name}".`, e);

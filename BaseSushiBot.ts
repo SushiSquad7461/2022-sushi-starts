@@ -1,15 +1,17 @@
 import { Client, GatewayIntentBits } from "discord.js";
 
+export type BaseSushiBotOptions = {
+    token: string;
+    name: string;
+};
+
 export class BaseSushiBot {
     protected client: Client;
     protected name: string;
 
     private loginPromise: Promise<string>;
 
-    constructor(options: {
-        token: string,
-        name: string,
-    }) {
+    constructor(options: BaseSushiBotOptions) {
         this.client = new Client({
             intents: [
                 GatewayIntentBits.Guilds,

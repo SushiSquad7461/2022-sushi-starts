@@ -1,19 +1,30 @@
-import { config } from "../dist/Environment.js";
-import { BaseSushiBot } from "../dist/BaseSushiBot.js";
+import { config } from "../Environment.js";
+import { BaseSushiBot, BaseSushiBotOptions } from "../BaseSushiBot.js";
 
-import { EmbedBuilder, userMention } from "discord.js";
+import { APIEmbedField, Collection, EmbedBuilder, Guild, GuildMember, TextChannel, userMention } from "discord.js";
 
 export class OrderBot extends BaseSushiBot {
-    constructor(options) {
+    private members: Collection<string, GuildMember>;
+    private membersFetchTime: number;
+
+    constructor(options: BaseSushiBotOptions) {
         super(options);
     }
 
-    get guild() {
-        return this.client.guilds.cache.get(config.discord.guildId);
+    private get guild(): Guild {
+        const guild = this.client.guilds.cache.get(config.discord.guildId);
+
+        if (!guild) throw new Error(`Could not fetch guild ${config.discord.guildId}`);
+
+        return guild;
     }
 
-    get channel() {
-        return this.client.channels.cache.get(config.discord.orderChannelId);
+    private get channel(): TextChannel {
+        const channel = this.client.channels.cache.get(config.discord.orderChannelId);
+
+        if (!channel) throw new Error(`Could not fetch channel ${config.discord.orderChannelId}`);
+
+        return channel as TextChannel;
     }
 
     async getMembers() {
@@ -26,11 +37,11 @@ export class OrderBot extends BaseSushiBot {
         return this.members;
     }
 
-    getTextPropertyValue(data, propertyName) {
+    private getTextPropertyValue(data: any, propertyName: string): string | null {
         return data[propertyName]["rich_text"][0]?.text?.content ?? null;
     }
 
-    getPropertyEmbed(data, propertyName) {
+    private getPropertyEmbed(data: any, propertyName: string): APIEmbedField | null {
         const propertyValue = this.getTextPropertyValue(data, propertyName);
 
         if (!propertyValue) return null;
@@ -42,10 +53,13 @@ export class OrderBot extends BaseSushiBot {
         };
     }
 
-    async updateUsers(userTag, orderInfo) {
+    public async updateUsers(userTag: string | null, orderInfo: any): Promise<void> {
         await this.waitForLogin();
 
-        const guildMember = (await this.getMembers()).find(x => x.user.username + "#" + x.user.discriminator == userTag);
+        const guildMember = userTag != null ?
+            (await this.getMembers()).find(x => x.user.username + "#" + x.user.discriminator == userTag) :
+            null;
+
         const userId = guildMember?.id;
 
         const orderRequestorRaw = orderInfo.Name.title[0]?.text?.content ?? "(not found)";
@@ -70,7 +84,7 @@ export class OrderBot extends BaseSushiBot {
         embed.addFields(
             ["Approver's note", "Order Tracking Link"]
                 .map(prop => this.getPropertyEmbed(orderInfo, prop))
-                .filter(field => field != null));
+                .filter(field => field != null) as APIEmbedField[]);
 
         this.channel.send({
             content: `${userId ? (userMention(userId) + " ") : ""}Order "${orderName}" was updated.`,

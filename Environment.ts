@@ -7,7 +7,7 @@ export const config = {
     },
     notion: {
         ...configFromJson.notion,
-        orderFormPollInterval: 5000,
+        orderFormPollInterval: 15000,
     },
     tokens: {
         arriveBotToken: process.env.ARRIVE_CLIENT_TOKEN,

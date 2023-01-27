@@ -84,7 +84,7 @@ async function createPage(date) {
 }
 
 export async function markPresent(tag, DATE) {
-  const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+22;
+  const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+(DATE.getFullYear() % 100);
   const day = DATE.getDay();
   const time = DATE.getHours();
 

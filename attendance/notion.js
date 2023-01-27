@@ -32,7 +32,7 @@ async function getUser(tag) {
 async function getCurrPage(date) {
   try {
     const currPage = await notion.databases.query({
-      database_id: config.notion.attendanceDatabaseId,
+      database_id: config.notion.engineeringNotebookDatabaseId,
       filter: {
         "property": 'Name',
         "text": {
@@ -51,7 +51,7 @@ async function createPage(date) {
   try {
     const response = await notion.pages.create({
       parent: {
-        database_id: config.notion.attendanceDatabaseId,
+        database_id: config.notion.engineeringNotebookDatabaseId,
       },
       icon: {
         type: 'emoji', emoji: '📝'
@@ -84,7 +84,7 @@ async function createPage(date) {
 }
 
 export async function markPresent(tag, DATE) {
-  const date = (DATE.getMonth()+1)+'/'+DATE.getDate()+'/'+(DATE.getFullYear() % 100);
+  const date = (DATE.getMonth()+1)+'/'+DATE.getDate();
   const day = DATE.getDay();
   const time = DATE.getHours();
 
@@ -144,7 +144,7 @@ export async function markPresent(tag, DATE) {
 export async function getAttendees() {
   try {
     const currPage = await notion.databases.query({
-      database_id: config.notion.attendanceDatabaseId,
+      database_id: config.notion.engineeringNotebookDatabaseId,
       filter: {
         "property": 'Name',
         "text": {

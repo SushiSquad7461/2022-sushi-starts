@@ -4,7 +4,7 @@
         "orderChannelId": "1011202136564047882"
     },
     "notion": {
-        "attendanceDatabaseId": "3a5e2a9c71d845b38f07d9da2da8649d",
+        "engineeringNotebookDatabaseId": "31f8e30d0bce48218b1de6aeda71936e",
         "attendanceLogDatabaseId": "f2024fcfbf7d4e499076f7422abeab5c",
         "orderFormDatabaseId": "760857d3fa054b0180f6bd746c047940",
         "rosterDatabaseId": "9fc1842aa5904eb886e9923d5072addc"

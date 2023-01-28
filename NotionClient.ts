@@ -13,6 +13,23 @@ export type RosterEntry = {
     notionUser?: NotionUser;
 };
 
+const rosterProps = {
+    name: "Name",
+    discordTag: "Discord Tag",
+    notionUser: "Notion User",
+};
+
+const engNotebookProps = {
+    name: "Name",
+    attendees: "Attendees",
+    lateAttendees: "Late Attendees",
+};
+
+const attendanceProps = {
+    leaving: "Leaving",
+    person: "Person",
+};
+
 export class NotionClient {
     private client: Client;
     private rosterEntryCache: Array<RosterEntry>;
@@ -27,9 +44,9 @@ export class NotionClient {
             throw new Error(`Roster entry did not have properties`);
         }
 
-        const nameProperty = notionData.properties.Name;
-        const discordTagProperty = notionData.properties["Discord Tag"];
-        const notionUserProperty = notionData.properties["Notion User"];
+        const nameProperty = notionData.properties[rosterProps.name];
+        const discordTagProperty = notionData.properties[rosterProps.discordTag];
+        const notionUserProperty = notionData.properties[rosterProps.notionUser];
 
         if (nameProperty?.type !== "title" || discordTagProperty?.type !== "rich_text" || notionUserProperty?.type !== "people") {
             throw new Error(`Roster entry did not contain the right properties.`);
@@ -79,9 +96,9 @@ export class NotionClient {
             const response = await this.client.databases.query({
                 database_id: config.notion.rosterDatabaseId,
                 filter: {
-                    "property": "Discord Tag",
-                    "rich_text": {
-                        "contains": tag,
+                    property: rosterProps.discordTag,
+                    rich_text: {
+                        contains: tag,
                     },
                 },
             });
@@ -101,9 +118,9 @@ export class NotionClient {
             const response = await this.client.databases.query({
                 database_id: config.notion.rosterDatabaseId,
                 filter: {
-                    "property": "Name",
-                    "rich_text": {
-                        "contains": name,
+                    property: rosterProps.name,
+                    rich_text: {
+                        contains: name,
                     },
                 },
             });
@@ -123,9 +140,9 @@ export class NotionClient {
             const response = await this.client.databases.query({
                 database_id: config.notion.rosterDatabaseId,
                 filter: {
-                    "property": "Notion User",
-                    "people": {
-                        "contains": user.id,
+                    property: rosterProps.notionUser,
+                    people: {
+                        contains: user.id,
                     },
                 },
             });
@@ -177,9 +194,9 @@ export class NotionClient {
         const queryResponse = await this.client.databases.query({
             database_id: config.notion.engineeringNotebookDatabaseId,
             filter: {
-                "property": "Name",
-                "rich_text": {
-                    "contains": name,
+                property: engNotebookProps.name,
+                rich_text: {
+                    contains: name,
                 },
             },
         });
@@ -203,7 +220,7 @@ export class NotionClient {
                 emoji: "📝",
             },
             properties: {
-                Name: {
+                [engNotebookProps.name]: {
                     type: "title",
                     title: [
                         {
@@ -233,17 +250,19 @@ export class NotionClient {
             };
         }
 
-        if (engNotebookPage.properties["Late Attendees"] == null || engNotebookPage.properties["Attendees"] == null ||
-            engNotebookPage.properties["Late Attendees"].type !== "people" || engNotebookPage.properties["Attendees"].type !== "people") {
+        const lateAttendeesProps = engNotebookPage.properties[engNotebookProps.lateAttendees];
+        const attendeesProps = engNotebookPage.properties[engNotebookProps.attendees];
+
+        if (lateAttendeesProps?.type !== "people" || attendeesProps?.type !== "people") {
             throw new Error(`Engineering notebook entry did not have the correct attendance properties.`);
         }
 
         const lateAttendees = await Promise.all(
-            engNotebookPage.properties["Late Attendees"].people.map(
+            lateAttendeesProps.people.map(
                 user => this.getRosterEntryFromNotionUser(user)));
 
         const attendees = await Promise.all(
-            engNotebookPage.properties.Attendees.people.map(
+            attendeesProps.people.map(
                 user => this.getRosterEntryFromNotionUser(user)));
 
         return {
@@ -266,7 +285,7 @@ export class NotionClient {
         const time = date.getHours();
 
         const isOnTime = ((day > 0 && day < 6) && (time < 16)) || (day === 6 && time < 11);
-        const attendeeProperty = isOnTime ? "Attendees" : "Late Attendees";
+        const attendeeProperty = isOnTime ? engNotebookProps.attendees : engNotebookProps.lateAttendees;
 
         const attendeeList = [
             ...(isOnTime ? attendees.attendees : attendees.lateAttendees),
@@ -297,11 +316,11 @@ export class NotionClient {
                 database_id: config.notion.attendanceLogDatabaseId,
             },
             properties: {
-                Leaving: {
+                [attendanceProps.leaving]: {
                     type: "checkbox",
                     checkbox: leaving,
                 },
-                Person: {
+                [attendanceProps.person]: {
                     type: "people",
                     people: [user.notionUser],
                 },

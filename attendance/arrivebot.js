@@ -22,7 +22,7 @@ export default function createArrivalBot(token, notion, attendees) {
             try {
                 await notion.markPresent(message.author.username + "#" + message.author.discriminator, date);
             } catch (error) {
-                console.warn(`ArriveBot: Failed to mark user "${user}" as present.`);
+                console.warn(`ArriveBot: Failed to mark user "${user}" as present.`, error);
             }
 
             if (ping === "") {
@@ -44,7 +44,7 @@ export default function createArrivalBot(token, notion, attendees) {
                 try {
                     await notion.logPing(false, user);
                 } catch (error) {
-                    console.warn(`ArriveBot: Failed to log attendance for user "${user}".`);
+                    console.warn(`ArriveBot: Failed to log attendance for user "${user}".`, error);
                 }
 
                 attendees.addAttendee(user, message.author.id);

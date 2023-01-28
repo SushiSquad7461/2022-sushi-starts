@@ -51,13 +51,15 @@ export default class OrderForm {
                         continue;
                     }
 
-                    const nameFromNotion = i.properties["Name"].title[0]?.plain_text;
-                    const nameFromRoster = nameFromNotion ? (await this.notion.getRosterEntryFromName(nameFromNotion)).discordTag : null;
+                    try {
+                        const nameFromNotion = i.properties["Name"].title[0]?.plain_text ?? "";
+                        const rosterEntry = await this.notion.getRosterEntryFromName(nameFromNotion);
 
-                    if (!nameFromNotion || !nameFromRoster) {
-                        console.warn(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
-                    } else {
-                        this.bot.updateUsers(nameFromRoster, i.properties);
+                        this.bot.updateUsers(rosterEntry?.discordTag ?? null, i.properties);
+                    } catch (error) {
+                        console.warn(`Order form checker: Could not get the name for an order.`, error);
+                    } finally {
+                        this.bot.updateUsers(null, i.properties);
                     }
                 }
 

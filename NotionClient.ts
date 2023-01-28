@@ -1,6 +1,7 @@
 import { CreatePageResponse, GetPageResponse, PageObjectResponse, PartialPageObjectResponse, PartialUserObjectResponse, QueryDatabaseParameters, QueryDatabaseResponse, UserObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import Client, { ClientOptions } from "@notionhq/client/build/src/Client";
-import { config } from "Environment";
+import { Client } from "@notionhq/client";
+import { config } from "./Environment.js";
+import { ClientOptions } from "@notionhq/client/build/src/Client";
 
 type NotionUser = PartialUserObjectResponse | UserObjectResponse;
 
@@ -237,8 +238,13 @@ export class NotionClient {
             throw new Error(`Engineering notebook entry did not have the correct attendance properties.`);
         }
 
-        const lateAttendees = await Promise.all(engNotebookPage.properties["Late Attendees"].people.map(this.getRosterEntryFromNotionUser));
-        const attendees = await Promise.all(engNotebookPage.properties.Attendees.people.map(this.getRosterEntryFromNotionUser));
+        const lateAttendees = await Promise.all(
+            engNotebookPage.properties["Late Attendees"].people.map(
+                user => this.getRosterEntryFromNotionUser(user)));
+
+        const attendees = await Promise.all(
+            engNotebookPage.properties.Attendees.people.map(
+                user => this.getRosterEntryFromNotionUser(user)));
 
         return {
             attendees,

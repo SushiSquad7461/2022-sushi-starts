@@ -21,7 +21,7 @@ export default function createLeaveBot(token, notion, attendees) {
             try {
                 await notion.logPing(true, user);
             } catch (error) {
-                console.error(`LeaveBot: Failed to log attendance for ${user}.`);
+                console.error(`LeaveBot: Failed to log attendance for ${user}.`, error);
             }
 
             if (attendees.findAttendee(message.author.id)) {

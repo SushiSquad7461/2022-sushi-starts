@@ -20,4 +20,4 @@ createArrivalBot(config.tokens.arriveBotToken, notion, attendees);
 createLeaveBot(config.tokens.leaveBotToken, notion, attendees);
 
 const orderBot = new OrderBot({ token: config.tokens.orderBotToken, name: "OrderBot" });
-new OrderForm(orderBot);
+new OrderForm(orderBot, notion);

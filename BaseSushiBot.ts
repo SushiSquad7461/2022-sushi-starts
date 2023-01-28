@@ -1,13 +1,16 @@
 import { Client, GatewayIntentBits } from "discord.js";
+import { DiscordErrorLogger } from "DiscordErrorLogger";
 
 export type BaseSushiBotOptions = {
     token: string;
     name: string;
+    logger: DiscordErrorLogger;
 };
 
 export class BaseSushiBot {
     protected client: Client;
     protected name: string;
+    protected logger: DiscordErrorLogger;
 
     private loginPromise: Promise<string>;
 
@@ -27,6 +30,7 @@ export class BaseSushiBot {
         });
 
         this.loginPromise = this.client.login(options.token);
+        this.logger = options.logger;
     }
 
     protected async waitForLogin(): Promise<string> {

@@ -4,15 +4,23 @@ import Attendees from "./attendance/attendees.js";
 import createLeaveBot from "./attendance/leavebot.js";
 import { OrderBot } from "./dist/orders/OrderBot.js";
 import OrderForm from "./dist/orders/OrderFormNotion.js";
+import { DiscordErrorLogger } from "./dist/DiscordErrorLogger.js";
 
-if (!config.tokens.arriveBotToken || !config.tokens.leaveBotToken || !config.tokens.orderBotToken) {
-    console.error("The ARRIVE_CLIENT_TOKEN, LEAVE_CLIENT_TOKEN, and ORDER_CLIENT_TOKEN environment variables are required.");
+if (!config.tokens.arriveBotToken || !config.tokens.leaveBotToken || !config.tokens.orderBotToken || !config.discord.loggerWebhookUrl) {
+    console.error("Missing environment variables.");
     process.exit(1);
 }
 
-const attendees = new Attendees();
-createArrivalBot(config.tokens.arriveBotToken, attendees);
-createLeaveBot(config.tokens.leaveBotToken, attendees);
+const logger = new DiscordErrorLogger(config.discord.loggerWebhookUrl);
 
-const orderBot = new OrderBot({ token: config.tokens.orderBotToken, name: "OrderBot" });
-new OrderForm(orderBot);
+// const attendees = new Attendees();
+// createArrivalBot(config.tokens.arriveBotToken, attendees);
+// createLeaveBot(config.tokens.leaveBotToken, attendees);
+
+const orderBot = new OrderBot({
+    token: config.tokens.orderBotToken,
+    name: "OrderBot",
+    logger,
+});
+
+const orderFormChecker = new OrderForm(orderBot, logger);

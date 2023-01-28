@@ -4,6 +4,7 @@ import configFromJson from "./config.json" assert { type: "json" };
 export const config = {
     discord: {
         ...configFromJson.discord,
+        loggerWebhookUrl: process.env.LOGGER_WEBHOOK_URL,
     },
     notion: {
         ...configFromJson.notion,

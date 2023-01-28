@@ -1,5 +1,6 @@
 import { Client } from "@notionhq/client"
 import { RichTextPropertyValue, TitlePropertyValue } from "@notionhq/client/build/src/api-types";
+import { DiscordErrorLogger } from "DiscordErrorLogger.js";
 import { config } from "../Environment.js";
 import { OrderBot } from "./OrderBot";
 
@@ -8,11 +9,13 @@ export default class OrderForm {
     private idTimesMap: Record<string, number>;
     private initialSyncPromise: Promise<void>;
     private notion: Client;
+    private logger: DiscordErrorLogger;
 
-    constructor(orderBot: OrderBot) {
+    constructor(orderBot: OrderBot, logger: DiscordErrorLogger) {
         this.bot = orderBot;
         this.idTimesMap = {};
         this.notion = new Client({ auth: config.tokens.notionClientKey });
+        this.logger = logger;
 
         this.initialSyncPromise = this.syncOrderForm(true);
         this.syncPeriodic();
@@ -46,7 +49,7 @@ export default class OrderForm {
                     const nameFromNotion = nameProperty?.title[0]?.plain_text;
 
                     if (!nameFromNotion) {
-                        console.warn(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
+                        this.logger.warning(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
                     } else {
                         const name = await this.getDiscordTagBasedOnName(nameFromNotion);
                         this.bot.updateUsers(name, i.properties);
@@ -56,7 +59,7 @@ export default class OrderForm {
                 this.idTimesMap[i.id] = pageLastEditedTime;
             }
         } catch (e) {
-            console.warn(`Order form checker: An error occurred when checking for order form updates.`, e);
+            this.logger.error(`Order form checker: An error occurred when checking for order form updates.`, e);
         }
     }
 
@@ -73,7 +76,7 @@ export default class OrderForm {
             });
 
             if (response.results.length === 0) {
-                console.warn(`Order form checker: Could not find a roster entry for name "${name}".`);
+                this.logger.warning(`Order form checker: Could not find a roster entry for name "${name}".`);
                 return null;
             }
 
@@ -85,7 +88,7 @@ export default class OrderForm {
                 return userDiscordTag?.rich_text[0]?.plain_text ?? null;
             }
         } catch (e) {
-            console.warn(`Order form checker: Caught an error trying to find Discord tag for name "${name}".`, e);
+            this.logger.error(`Order form checker: Caught an error trying to find Discord tag for name "${name}".`, e);
         }
 
         return null;

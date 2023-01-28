@@ -69,7 +69,7 @@ export class OrderBot extends BaseSushiBot {
         const status = orderInfo["Tracking #"]?.status?.name;
 
         if (!orderName || !status) {
-            console.warn(`OrderBot: Order name or status were null.`);
+            this.logger.warning(`OrderBot: Order name or status were null.`);
             return;
         }
 

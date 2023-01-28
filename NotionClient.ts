@@ -9,7 +9,7 @@ export type DiscordTag = string;
 
 export type RosterEntry = {
     name: string;
-    discordTag?: string;
+    discordTag?: DiscordTag;
     notionUser?: NotionUser;
 };
 

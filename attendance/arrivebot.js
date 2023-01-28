@@ -1,7 +1,6 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { markPresent, logPing } from "./notion.js";
 
-export default function createArrivalBot(token, attendees) {
+export default function createArrivalBot(token, notion, attendees) {
     const client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
@@ -20,7 +19,11 @@ export default function createArrivalBot(token, attendees) {
 
             let ping = attendees.attendees_id.map(id => `<@${id}>`).join(" ");
 
-            await markPresent(message.author.username + "#" + message.author.discriminator, date);
+            try {
+                await notion.markPresent(message.author.username + "#" + message.author.discriminator, date);
+            } catch (error) {
+                console.warn(`ArriveBot: Failed to mark user "${user}" as present.`, error);
+            }
 
             if (ping === "") {
                 ping = `Welcome, <@${message.author.id}>. There is no one here yet.`;
@@ -38,7 +41,12 @@ export default function createArrivalBot(token, attendees) {
             }
 
             if (!attendees.findAttendee(message.author.id)) {
-                await logPing(false, user);
+                try {
+                    await notion.logPing(false, user);
+                } catch (error) {
+                    console.warn(`ArriveBot: Failed to log attendance for user "${user}".`, error);
+                }
+
                 attendees.addAttendee(user, message.author.id);
             }
         }

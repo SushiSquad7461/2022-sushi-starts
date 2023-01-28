@@ -1,7 +1,6 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { logPing } from "./notion.js";
 
-export default function createLeaveBot(token, attendees) {
+export default function createLeaveBot(token, notion, attendees) {
     const client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
@@ -19,7 +18,11 @@ export default function createLeaveBot(token, attendees) {
 
             message.reply(`Goodbye, <@${message.author.id}>.`);
 
-            await logPing(true, user);
+            try {
+                await notion.logPing(true, user);
+            } catch (error) {
+                console.error(`LeaveBot: Failed to log attendance for ${user}.`);
+            }
 
             if (attendees.findAttendee(message.author.id)) {
                 attendees.removeAttendee(user, message.author.id);

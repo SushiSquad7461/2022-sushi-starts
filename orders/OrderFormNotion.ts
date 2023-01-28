@@ -1,4 +1,3 @@
-import { TitlePropertyValue } from "@notionhq/client/build/src/api-types";
 import { NotionClient } from "NotionClient.js";
 import { config } from "../Environment.js";
 import { OrderBot } from "./OrderBot";
@@ -37,13 +36,22 @@ export default class OrderForm {
             });
 
             for (let i of orders.results) {
+                if (!("last_edited_time" in i)) {
+                    console.warn(`Order form checker: Received a partial response from Notion, skipping.`);
+                    continue;
+                }
+
                 const pageLastEditedTime = new Date(i.last_edited_time).getTime();
 
                 // Send a Discord message only after the first sync,
                 // and only if there is a new order form entry or an order form entry has changed.
                 if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
-                    const nameProperty = i.properties.Name as TitlePropertyValue | undefined;
-                    const nameFromNotion = nameProperty?.title[0]?.plain_text;
+                    if (i.properties["Name"]?.type !== "title") {
+                        console.warn(`Order form checker: Name property is not properly formatted.`);
+                        continue;
+                    }
+
+                    const nameFromNotion = i.properties["Name"].title[0]?.plain_text;
                     const nameFromRoster = nameFromNotion ? (await this.notion.getRosterEntryFromName(nameFromNotion)).discordTag : null;
 
                     if (!nameFromNotion || !nameFromRoster) {

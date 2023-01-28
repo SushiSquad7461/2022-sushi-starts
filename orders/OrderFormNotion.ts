@@ -1,5 +1,5 @@
-import { Client } from "@notionhq/client"
-import { RichTextPropertyValue, TitlePropertyValue } from "@notionhq/client/build/src/api-types";
+import { TitlePropertyValue } from "@notionhq/client/build/src/api-types";
+import { NotionClient } from "NotionClient.js";
 import { config } from "../Environment.js";
 import { OrderBot } from "./OrderBot";
 
@@ -7,12 +7,12 @@ export default class OrderForm {
     private bot: OrderBot;
     private idTimesMap: Record<string, number>;
     private initialSyncPromise: Promise<void>;
-    private notion: Client;
+    private notion: NotionClient;
 
-    constructor(orderBot: OrderBot) {
+    constructor(orderBot: OrderBot, notionClient: NotionClient) {
         this.bot = orderBot;
         this.idTimesMap = {};
-        this.notion = new Client({ auth: config.tokens.notionClientKey });
+        this.notion = notionClient;
 
         this.initialSyncPromise = this.syncOrderForm(true);
         this.syncPeriodic();
@@ -32,7 +32,7 @@ export default class OrderForm {
 
     private async syncOrderForm(isFirstSync: boolean) {
         try {
-            const orders = await this.notion.databases.query({
+            const orders = await this.notion.queryDatabase({
                 database_id: config.notion.orderFormDatabaseId,
             });
 
@@ -44,12 +44,12 @@ export default class OrderForm {
                 if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
                     const nameProperty = i.properties.Name as TitlePropertyValue | undefined;
                     const nameFromNotion = nameProperty?.title[0]?.plain_text;
+                    const nameFromRoster = nameFromNotion ? (await this.notion.getRosterEntryFromName(nameFromNotion)).discordTag : null;
 
-                    if (!nameFromNotion) {
+                    if (!nameFromNotion || !nameFromRoster) {
                         console.warn(`Order form checker: Could not get the name of an order form entry. ID: ${i.id}`);
                     } else {
-                        const name = await this.getDiscordTagBasedOnName(nameFromNotion);
-                        this.bot.updateUsers(name, i.properties);
+                        this.bot.updateUsers(nameFromRoster, i.properties);
                     }
                 }
 
@@ -58,36 +58,5 @@ export default class OrderForm {
         } catch (e) {
             console.warn(`Order form checker: An error occurred when checking for order form updates.`, e);
         }
-    }
-
-    private async getDiscordTagBasedOnName(name: string) {
-        try {
-            const response = await this.notion.databases.query({
-                database_id: config.notion.rosterDatabaseId,
-                filter: {
-                    "property": 'Name',
-                    "text": {
-                        "contains": name,
-                    }
-                },
-            });
-
-            if (response.results.length === 0) {
-                console.warn(`Order form checker: Could not find a roster entry for name "${name}".`);
-                return null;
-            }
-
-            const userRosterPageId = response.results[0]?.id;
-        
-            if (userRosterPageId != null) {
-                const userRosterEntry = await this.notion.pages.retrieve({ page_id: userRosterPageId });
-                const userDiscordTag = userRosterEntry.properties["Discord Tag"] as RichTextPropertyValue | undefined;
-                return userDiscordTag?.rich_text[0]?.plain_text ?? null;
-            }
-        } catch (e) {
-            console.warn(`Order form checker: Caught an error trying to find Discord tag for name "${name}".`, e);
-        }
-
-        return null;
     }
 }

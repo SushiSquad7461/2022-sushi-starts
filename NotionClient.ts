@@ -272,8 +272,14 @@ export class NotionClient {
     }
 
     public async markPresent(tag: DiscordTag, date: Date): Promise<void> {
-        const engNotebookPage = await this.getOrCreateEngineeringNotebookEntry(date);
         const rosterEntry = await this.getRosterEntryFromDiscordTag(tag);
+
+        if (rosterEntry.notionUser == null) {
+            console.warn(`NotionClient: No Notion user found for "${tag}".`);
+            return;
+        }
+
+        const engNotebookPage = await this.getOrCreateEngineeringNotebookEntry(date);
         const attendees = await this.getAttendees(engNotebookPage);
 
         const findAttendeeByTag = (attendee: RosterEntry): boolean => attendee.discordTag === tag;
@@ -290,7 +296,7 @@ export class NotionClient {
         const attendeeList = [
             ...(isOnTime ? attendees.attendees : attendees.lateAttendees),
             rosterEntry
-        ].map(entry => entry.notionUser).filter((user: NotionUser | undefined): user is NotionUser => user !== null);
+        ].map(entry => entry.notionUser).filter((user: NotionUser | undefined): user is NotionUser => user != null);
 
         await this.client.pages.update({
             page_id: pageId,

@@ -58,7 +58,6 @@ export default class OrderForm {
                         this.bot.updateUsers(rosterEntry?.discordTag ?? null, i.properties);
                     } catch (error) {
                         console.warn(`Order form checker: Could not get the name for an order.`, error);
-                    } finally {
                         this.bot.updateUsers(null, i.properties);
                     }
                 }

@@ -73,8 +73,6 @@ export class OrderBot extends BaseSushiBot {
 
     public async updateUsers(userTag: string | null, orderInfo: any): Promise<void> {
         await this.waitForLogin();
-        
-        console.log(orderInfo);
 
         const guildMember = userTag != null ?
             (await this.getMembers()).find(x => x.user.username == userTag) :

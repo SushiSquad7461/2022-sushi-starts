@@ -1,6 +1,7 @@
 import { NotionClient } from "NotionClient.js";
 import { config } from "../Environment.js";
 import { OrderBot } from "./OrderBot";
+import { isFullUser } from "@notionhq/client";
 
 export default class OrderForm {
     private bot: OrderBot;
@@ -46,16 +47,19 @@ export default class OrderForm {
                 // Send a Discord message only after the first sync,
                 // and only if there is a new order form entry or an order form entry has changed.
                 if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
-                    if (i.properties["Name"]?.type !== "title") {
-                        console.warn(`Order form checker: Name property is not properly formatted.`);
+                    if (i.properties["Submitter"]?.type != "people") {
+                        console.warn(`Order form checker: Submitter not "people" type`);
                         continue;
                     }
 
                     try {
-                        const nameFromNotion = i.properties["Name"].title[0]?.plain_text ?? "";
-                        const rosterEntry = await this.notion.getRosterEntryFromName(nameFromNotion);
-
-                        this.bot.updateUsers(rosterEntry?.discordTag ?? null, i.properties);
+                        const submitterName = i.properties["Submitter"].people.at(0);
+                        if (submitterName != null && isFullUser(submitterName) && submitterName.name != null) {
+                            const rosterEntry = await this.notion.getRosterEntryFromName(submitterName.name);
+                            this.bot.updateUsers(rosterEntry?.discordTag ?? null, i.properties);
+                        } else {
+                            throw Error("Submitter object malformed")
+                        }
                     } catch (error) {
                         console.warn(`Order form checker: Could not get the name for an order.`, error);
                         this.bot.updateUsers(null, i.properties);

@@ -1,5 +1,5 @@
 import { CreatePageResponse, GetPageResponse, PageObjectResponse, PartialPageObjectResponse, PartialUserObjectResponse, QueryDatabaseParameters, QueryDatabaseResponse, UserObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import { Client } from "@notionhq/client";
+import { Client, isFullPage } from "@notionhq/client";
 import { config } from "./Environment.js";
 import { ClientOptions } from "@notionhq/client/build/src/Client";
 
@@ -115,7 +115,7 @@ export class NotionClient {
         if (entryFromCache != null) return entryFromCache;
 
         try {
-            const response = await this.client.databases.query({
+            const response = await this.queryDatabase({
                 database_id: config.notion.rosterDatabaseId,
                 filter: {
                     property: rosterProps.name,
@@ -201,7 +201,7 @@ export class NotionClient {
             },
         });
 
-        if (queryResponse.results.length === 0 || queryResponse.results[0] == null || !("properties" in queryResponse.results[0])) {
+        if (queryResponse.results.length === 0 || queryResponse.results[0] == null || !isFullPage(queryResponse.results[0])) {
             return null;
         }
 

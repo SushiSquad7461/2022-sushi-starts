@@ -42,7 +42,25 @@ export class OrderBot extends BaseSushiBot {
     }
 
     private getPropertyEmbed(data: any, propertyName: string): APIEmbedField | null {
-        const propertyValue = this.getTextPropertyValue(data, propertyName);
+        let propertyValue;
+        
+        switch (data[propertyName]["type"]) {
+            case 'rich_text':
+                propertyValue = this.getTextPropertyValue(data, propertyName);
+                break;
+            case 'number':
+                propertyValue = data[propertyName]["number"]?.toString() ?? null;
+                break;
+            case 'url':
+                propertyValue = data[propertyName]["url"] ?? null;
+                break;
+            case 'people':
+                propertyValue = data[propertyName]["people"][0]?.name ?? null;
+                break;
+            default:
+                propertyValue = null;
+                break;
+        }
 
         if (!propertyValue) return null;
 
@@ -57,24 +75,25 @@ export class OrderBot extends BaseSushiBot {
         await this.waitForLogin();
 
         const guildMember = userTag != null ?
-            (await this.getMembers()).find(x => x.user.username + "#" + x.user.discriminator == userTag) :
+            (await this.getMembers()).find(x => x.user.username == userTag) :
             null;
-
         const userId = guildMember?.id;
 
-        const orderRequestorRaw = orderInfo.Name.title[0]?.text?.content ?? "(not found)";
-        const orderName = this.getTextPropertyValue(orderInfo, "Product Name");
-        const orderDescription = this.getTextPropertyValue(orderInfo, "Description");
+        const orderProperties = orderInfo["properties"];
+        const orderName = "ORDER-" + orderProperties["ID"]["unique_id"]["number"];
+        const orderDescription = orderProperties["Order Description"]["title"][0]["plain_text"] ?? "(not found)";
+        const orderRequestorRaw = orderProperties["Submitter"]["people"][0]["name"] ?? "(not found)";
+        const status = orderProperties["Status"]["status"]["name"];
+        const orderPageUrl = orderInfo["url"];
 
-        const status = orderInfo["Tracking #"]?.status?.name;
-
-        if (!orderName || !status) {
+        if (!orderName || !orderDescription || !status) {
             console.warn(`OrderBot: Order name or status were null.`);
             return;
         }
 
         const embed = new EmbedBuilder()
             .setTitle(orderName)
+            .setURL(orderPageUrl)
             .setDescription(orderDescription)
             .addFields(
                 { name: "Requester", value: (userId ? userMention(userId) : userTag) ?? orderRequestorRaw },
@@ -82,8 +101,8 @@ export class OrderBot extends BaseSushiBot {
             );
 
         embed.addFields(
-            ["Approver's note", "Order Tracking Link"]
-                .map(prop => this.getPropertyEmbed(orderInfo, prop))
+            ["Product Name", "Quantity", "Order Tracking Link", "Approver", "Approver's Note"]
+                .map(prop => this.getPropertyEmbed(orderProperties, prop))
                 .filter(field => field != null) as APIEmbedField[]);
 
         this.channel.send({

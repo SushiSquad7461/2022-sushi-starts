@@ -64,7 +64,7 @@ export default class OrderForm {
                             const rosterEntry = await this.notion.getRosterEntryFromName(submitterName.name);
                             this.bot.updateUsers(rosterEntry?.discordTag ?? null, i);
                         } else {
-                            throw Error("Submitter object malformed")
+                            throw new Error("Submitter object malformed")
                         }
                     } catch (error) {
                         console.warn(`Order form checker: Could not get the name for an order.`, error);
@@ -79,12 +79,12 @@ export default class OrderForm {
         }
     }
 
-    private completedSushiOrder(orderObject: PageObjectResponse) {
+    private completedSushiOrder(orderObject: PageObjectResponse): boolean {
         if (orderObject.properties["Order Description"]?.type == "title" && orderObject.properties["Product Name"]?.type == "rich_text" && orderObject.properties["Subtotal"]?.type == "number") {
             const title = orderObject.properties["Order Description"]?.title.at(0)?.plain_text ?? null;
             const subtotal = orderObject.properties["Subtotal"].number ?? null;
 
-            return title && title != "<Seller / Product Description> NOT your name" && subtotal;
+            return title != "<Seller / Product Description> NOT your name" && subtotal != null;
         }
         return false;
     }

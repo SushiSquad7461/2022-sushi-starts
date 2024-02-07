@@ -42,7 +42,7 @@ export class OrderBot extends BaseSushiBot {
     }
 
     private getPropertyEmbed(data: any, propertyName: string): APIEmbedField | null {
-        var propertyValue;
+        let propertyValue;
         
         switch (data[propertyName]["type"]) {
             case 'rich_text':

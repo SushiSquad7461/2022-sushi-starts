@@ -4,15 +4,20 @@ import { OrderBot } from "./OrderBot";
 import { isFullUser, isFullPage } from "@notionhq/client";
 import { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
 
+const orderStatuses = {
+    new: "New",
+    submitted: "Submitted",
+};
+
 export default class OrderForm {
     private bot: OrderBot;
-    private idTimesMap: Record<string, number>;
+    private lastRequisitionStatus: Record<string, string>;
     private initialSyncPromise: Promise<void>;
     private notion: NotionClient;
 
     constructor(orderBot: OrderBot, notionClient: NotionClient) {
         this.bot = orderBot;
-        this.idTimesMap = {};
+        this.lastRequisitionStatus = {};
         this.notion = notionClient;
 
         this.initialSyncPromise = this.syncOrderForm(true);
@@ -43,23 +48,26 @@ export default class OrderForm {
                     continue;
                 }
 
-                const pageLastEditedTime = new Date(i.last_edited_time).getTime();
+                const status = i.properties["Status"]?.type === "status" && i.properties["Status"].status?.name;
+
+                if (!status || !this.completedSushiOrder(i)) {
+                    console.warn(`Order form checker: Received a partially filled out page ${i.id}, skipping until required title, product name, subtotal, and status are filled out`);
+                    continue;
+                }
+
                 // Send a Discord message only after the first sync,
                 // and only if there is a new order form entry or an order form entry has changed.
-                if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
-                                    // given the required title, product name, and subtotal are not filled out, skip until next sync
-                    if (!this.completedSushiOrder(i)) {
-                        console.warn(`Order form checker: Received a partially filled out page ${i.id}, skipping until required title, product name, and subtotal are filled out`);
-                        continue;
-                    }
+                if (!isFirstSync && (!this.lastRequisitionStatus[i.id] || status !== this.lastRequisitionStatus[i.id])) {
+                    // given the required title, product name, and subtotal are not filled out, skip until next sync
 
-                    if (i.properties["Submitter"]?.type != "people") {
+
+                    if (i.properties["Submitter"]?.type !== "people") {
                         console.warn(`Order form checker: Submitter not "people" type`);
                         continue;
                     }
 
                     try {
-                        const submitterName = i.properties["Submitter"].people.at(0);
+                        const submitterName = i.properties["Submitter"]?.people.at(0);
                         if (submitterName != null && isFullUser(submitterName) && submitterName.name != null) {
                             const rosterEntry = await this.notion.getRosterEntryFromName(submitterName.name);
                             this.bot.updateUsers(rosterEntry?.discordTag ?? null, i);
@@ -72,7 +80,7 @@ export default class OrderForm {
                     }
                 }
 
-                this.idTimesMap[i.id] = pageLastEditedTime;
+                this.lastRequisitionStatus[i.id] = status;
             }
         } catch (e) {
             console.warn(`Order form checker: An error occurred when checking for order form updates.`, e);
@@ -80,11 +88,17 @@ export default class OrderForm {
     }
 
     private completedSushiOrder(orderObject: PageObjectResponse): boolean {
-        if (orderObject.properties["Order Description"]?.type == "title" && orderObject.properties["Product Name"]?.type == "rich_text" && orderObject.properties["Subtotal"]?.type == "number") {
+        if (orderObject.properties["Order Description"]?.type === "title" &&
+                orderObject.properties["Product Name"]?.type === "rich_text" &&
+                orderObject.properties["Subtotal"]?.type === "number" &&
+                orderObject.properties["Status"]?.type === "status") {
             const title = orderObject.properties["Order Description"]?.title.at(0)?.plain_text ?? null;
             const subtotal = orderObject.properties["Subtotal"].number ?? null;
+            const status = orderObject.properties["Status"].status?.name ?? null;
 
-            return title != "<Seller / Product Description> NOT your name" && subtotal != null;
+            return title !== "<Seller / Product Description> NOT your name" &&
+                    subtotal !== null && 
+                    status !== null && status !== orderStatuses.new;
         }
         return false;
     }

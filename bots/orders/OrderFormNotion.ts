@@ -1,8 +1,9 @@
-import { NotionClient } from "NotionClient.js";
-import { config } from "../Environment.js";
-import { OrderBot } from "./OrderBot";
+import { NotionClient } from "clients/NotionClient.js";
+import { config } from "../../Environment.js";
+import { OrderBot } from "./OrderBot.js";
 import { isFullUser, isFullPage } from "@notionhq/client";
 import { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
+import { orderFormProps } from "../../utils/NotionDatabaseConstants.js";
 
 export default class OrderForm {
     private bot: OrderBot;
@@ -48,27 +49,28 @@ export default class OrderForm {
                 // and only if there is a new order form entry or an order form entry has changed.
                 if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
                                     // given the required title, product name, and subtotal are not filled out, skip until next sync
-                    if (!this.completedSushiOrder(i)) {
+                    if (!this.isCompletedSushiOrder(i)) {
                         console.warn(`Order form checker: Received a partially filled out page ${i.id}, skipping until required title, product name, and subtotal are filled out`);
                         continue;
                     }
 
-                    if (i.properties["Submitter"]?.type != "people") {
+                    const submitter = i.properties[orderFormProps.submitter];
+                    if (submitter != null && submitter?.type != "people") {
                         console.warn(`Order form checker: Submitter not "people" type`);
                         continue;
                     }
 
                     try {
-                        const submitterName = i.properties["Submitter"].people.at(0);
-                        if (submitterName != null && isFullUser(submitterName) && submitterName.name != null) {
-                            const rosterEntry = await this.notion.getRosterEntryFromName(submitterName.name);
+                        const submitterFirst = submitter?.people.at(0);
+                        if (submitterFirst != null &&  isFullUser(submitterFirst) && submitterFirst.name != null) {
+                            const rosterEntry = await this.notion.getRosterEntryFromName(submitterFirst.name);
                             this.bot.updateUsers(rosterEntry?.discordTag ?? null, i);
                         } else {
                             throw new Error("Submitter object malformed")
                         }
                     } catch (error) {
                         console.warn(`Order form checker: Could not get the name for an order.`, error);
-                        this.bot.updateUsers(null, i.properties);
+                        this.bot.updateUsers(null, i);
                     }
                 }
 
@@ -79,13 +81,15 @@ export default class OrderForm {
         }
     }
 
-    private completedSushiOrder(orderObject: PageObjectResponse): boolean {
-        if (orderObject.properties["Order Description"]?.type == "title" && orderObject.properties["Product Name"]?.type == "rich_text" && orderObject.properties["Subtotal"]?.type == "number") {
-            const title = orderObject.properties["Order Description"]?.title.at(0)?.plain_text ?? null;
-            const subtotal = orderObject.properties["Subtotal"].number ?? null;
+    private isCompletedSushiOrder(orderObject: PageObjectResponse): boolean {
+        const orderProperties = orderObject.properties;
 
-            return title != "<Seller / Product Description> NOT your name" && subtotal != null;
-        }
-        return false;
+        const titleProperty = orderProperties[orderFormProps.description];
+        const title = titleProperty?.type === 'title' ? titleProperty.title?.at(0)?.plain_text : null;
+
+        const subtotalProperty = orderProperties[orderFormProps.subtotal];
+        const subtotal =  subtotalProperty?.type === 'number' ? subtotalProperty.number : null;
+
+        return title !== null && title !== orderFormProps.defaultDescription && subtotal !== null;
     }
 }

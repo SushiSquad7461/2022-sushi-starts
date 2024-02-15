@@ -1,10 +1,10 @@
 import { config } from "./dist/Environment.js";
-import createArrivalBot from "./attendance/arrivebot.js";
-import Attendees from "./attendance/attendees.js";
-import createLeaveBot from "./attendance/leavebot.js";
-import { OrderBot } from "./dist/orders/OrderBot.js";
-import OrderForm from "./dist/orders/OrderFormNotion.js";
-import { NotionClient } from "./dist/NotionClient.js";
+import createArrivalBot from "./bots/attendance/arrivebot.js";
+import Attendees from "./bots/attendance/attendees.js";
+import createLeaveBot from "./bots/attendance/leavebot.js";
+import { OrderBot } from "./dist/bots/orders/OrderBot.js";
+import OrderForm from "./dist/bots/orders/OrderFormNotion.js";
+import { NotionClient } from "./dist/clients/NotionClient.js";
 
 if (!config.tokens.arriveBotToken || !config.tokens.leaveBotToken || !config.tokens.orderBotToken) {
     console.error("The ARRIVE_CLIENT_TOKEN, LEAVE_CLIENT_TOKEN, and ORDER_CLIENT_TOKEN environment variables are required.");

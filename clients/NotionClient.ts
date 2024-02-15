@@ -1,7 +1,8 @@
 import { CreatePageResponse, GetPageResponse, PageObjectResponse, PartialPageObjectResponse, PartialUserObjectResponse, QueryDatabaseParameters, QueryDatabaseResponse, UserObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { Client, isFullPage } from "@notionhq/client";
-import { config } from "./Environment.js";
+import { config } from "../Environment.js";
 import { ClientOptions } from "@notionhq/client/build/src/Client";
+import { rosterProps, engNotebookProps, attendanceProps } from "../utils/NotionDatabaseConstants.js";
 
 type NotionUser = PartialUserObjectResponse | UserObjectResponse;
 
@@ -11,23 +12,6 @@ export type RosterEntry = {
     name: string;
     discordTag?: DiscordTag;
     notionUser?: NotionUser;
-};
-
-const rosterProps = {
-    name: "Name",
-    discordTag: "Discord Tag",
-    notionUser: "Notion User",
-};
-
-const engNotebookProps = {
-    name: "Name",
-    attendees: "Attendees",
-    lateAttendees: "Late Attendees",
-};
-
-const attendanceProps = {
-    leaving: "Leaving",
-    person: "Person",
 };
 
 export class NotionClient {

@@ -1,7 +1,8 @@
-import { config } from "../Environment.js";
+import { config } from "../../Environment.js";
 import { BaseSushiBot, BaseSushiBotOptions } from "../BaseSushiBot.js";
 
 import { APIEmbedField, Collection, EmbedBuilder, Guild, GuildMember, TextChannel, userMention } from "discord.js";
+import { orderFormProps } from "../../utils/NotionDatabaseConstants.js";
 
 export class OrderBot extends BaseSushiBot {
     private members: Collection<string, GuildMember>;
@@ -80,10 +81,10 @@ export class OrderBot extends BaseSushiBot {
         const userId = guildMember?.id;
 
         const orderProperties = orderInfo["properties"];
-        const orderName = "ORDER-" + orderProperties["ID"]["unique_id"]["number"];
-        const orderDescription = orderProperties["Order Description"]["title"][0]["plain_text"] ?? "(not found)";
-        const orderRequestorRaw = orderProperties["Submitter"]["people"][0]["name"] ?? "(not found)";
-        const status = orderProperties["Status"]["status"]["name"];
+        const orderName = "ORDER-" + orderProperties[orderFormProps.id]["unique_id"]["number"];
+        const orderDescription = orderProperties[orderFormProps.description]["title"][0]["plain_text"] ?? "(not found)";
+        const orderRequestorRaw = orderProperties[orderFormProps.submitter]["people"][0]["name"] ?? "(not found)";
+        const status = orderProperties[orderFormProps.status]["status"]["name"];
         const orderPageUrl = orderInfo["url"];
 
         if (!orderName || !orderDescription || !status) {
@@ -101,12 +102,12 @@ export class OrderBot extends BaseSushiBot {
             );
 
         embed.addFields(
-            ["Product Name", "Quantity", "Order Tracking Link", "Approver", "Approver's Note"]
+            [orderFormProps.productName, orderFormProps.quantity, orderFormProps.trackingLink, orderFormProps.approver, orderFormProps.approverNote]
                 .map(prop => this.getPropertyEmbed(orderProperties, prop))
                 .filter(field => field != null) as APIEmbedField[]);
 
         this.channel.send({
-            content: `${userId ? (userMention(userId) + " ") : ""}Order "${orderName}" was updated.`,
+            content: `${userId ? (userMention(userId) + " ") : ""}${orderName} was updated.`,
             embeds: [embed],
         });
     }

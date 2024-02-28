@@ -15,7 +15,8 @@ export const attendanceProps = {
   person: "Person",
 };
 
-export const orderFormProps = {
+export const orderFormKeys = {
+  lastEditedTime: "Last edited time",
   productName: "Product Name",
   quantity: "Quantity",
   trackingLink: "Order Tracking Link",
@@ -27,7 +28,5 @@ export const orderFormProps = {
   id: "ID",
   subtotal: "Subtotal",
   defaultDescription: "<Seller / Product Description> NOT your name",
-  properties: "properties",
+  productLink: "Product Link",
 };
-
-export type databaseProperties = "properties";

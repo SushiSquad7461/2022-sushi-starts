@@ -2,7 +2,7 @@ import { config } from "../../Environment.js";
 import { BaseSushiBot, BaseSushiBotOptions } from "../BaseSushiBot.js";
 
 import { APIEmbedField, Collection, EmbedBuilder, Guild, GuildMember, TextChannel, userMention } from "discord.js";
-import { orderFormProps } from "../../utils/NotionDatabaseConstants.js";
+import { RequisitionObject } from "../../models/RequisitionObject.js";
 
 export class OrderBot extends BaseSushiBot {
     private members: Collection<string, GuildMember>;
@@ -38,76 +38,63 @@ export class OrderBot extends BaseSushiBot {
         return this.members;
     }
 
-    private getTextPropertyValue(data: any, propertyName: string): string | null {
-        return data[propertyName]["rich_text"][0]?.text?.content ?? null;
-    }
-
-    private getPropertyEmbed(data: any, propertyName: string): APIEmbedField | null {
-        let propertyValue;
-        
-        switch (data[propertyName]["type"]) {
-            case 'rich_text':
-                propertyValue = this.getTextPropertyValue(data, propertyName);
+    private getPropertyEmbed(data: RequisitionObject, prop: keyof RequisitionObject): APIEmbedField | null {
+        let propertyValue; 
+        switch (prop) {
+            case "submitter":
+            case "approver":
+                propertyValue = data[prop]?.name ?? null;
                 break;
-            case 'number':
-                propertyValue = data[propertyName]["number"]?.toString() ?? null;
-                break;
-            case 'url':
-                propertyValue = data[propertyName]["url"] ?? null;
-                break;
-            case 'people':
-                propertyValue = data[propertyName]["people"][0]?.name ?? null;
+            case "quantity":
+            case "subtotal":
+                propertyValue = data[prop].toString();
                 break;
             default:
-                propertyValue = null;
+                propertyValue = data[prop];
                 break;
         }
 
         if (!propertyValue) return null;
 
+        let propName = prop.replace(/([A-Z])/g, ' $1');
+        propName = propName.charAt(0).toUpperCase() + propName.slice(1);
+        
         return {
-            name: propertyName,
+            name: propName,
             value: propertyValue,
             inline: true,
-        };
+        }
     }
 
-    public async updateUsers(userTag: string | null, orderInfo: any): Promise<void> {
+    public async updateUsers(userTag: string | null, orderInfo: RequisitionObject, orderPageUrl: string): Promise<void> {
         await this.waitForLogin();
 
-        const guildMember = userTag != null ?
-            (await this.getMembers()).find(x => x.user.username == userTag) :
+        const guildMemberId = userTag != null ?
+            (await this.getMembers()).find(x => x.user.username == userTag)?.id :
             null;
-        const userId = guildMember?.id;
+        const orderName = "ORDER-" + orderInfo.orderId;
+        const orderDescription = orderInfo.description;
+        const requesterName = orderInfo.submitter.name?.toString() ?? "(not found)";
+        const orderRequester = (guildMemberId ? userMention(guildMemberId) : userTag) ?? requesterName;
+        const orderStatus = orderInfo.status.toLowerCase();
 
-        const orderProperties = orderInfo["properties"];
-        const orderName = "ORDER-" + orderProperties[orderFormProps.id]["unique_id"]["number"];
-        const orderDescription = orderProperties[orderFormProps.description]["title"][0]["plain_text"] ?? "(not found)";
-        const orderRequestorRaw = orderProperties[orderFormProps.submitter]["people"][0]["name"] ?? "(not found)";
-        const status = orderProperties[orderFormProps.status]["status"]["name"];
-        const orderPageUrl = orderInfo["url"];
-
-        if (!orderName || !orderDescription || !status) {
-            console.warn(`OrderBot: Order name or status were null.`);
-            return;
-        }
-
-        const embed = new EmbedBuilder()
+        const embed =  new EmbedBuilder()
             .setTitle(orderName)
             .setURL(orderPageUrl)
             .setDescription(orderDescription)
             .addFields(
-                { name: "Requester", value: (userId ? userMention(userId) : userTag) ?? orderRequestorRaw },
-                { name: "Order status", value: status },
+                { name: "Requester", value: orderRequester},
+                { name: "Order status", value: orderStatus },
             );
 
+        const remainingFields: Array<keyof RequisitionObject> = ["productName", "quantity", "approver", "approverNote", "trackingLink"];
+
         embed.addFields(
-            [orderFormProps.productName, orderFormProps.quantity, orderFormProps.trackingLink, orderFormProps.approver, orderFormProps.approverNote]
-                .map(prop => this.getPropertyEmbed(orderProperties, prop))
-                .filter(field => field != null) as APIEmbedField[]);
+            remainingFields.map(prop => this.getPropertyEmbed(orderInfo, prop)).filter(field => field != null) as APIEmbedField[]
+        );
 
         this.channel.send({
-            content: `${userId ? (userMention(userId) + " ") : ""}${orderName} was updated.`,
+            content: `${guildMemberId ? (userMention(guildMemberId) + " ") : ""}${orderName} was updated.`,
             embeds: [embed],
         });
     }

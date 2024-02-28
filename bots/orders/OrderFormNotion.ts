@@ -51,7 +51,6 @@ export default class OrderForm {
                 const pageLastEditedTime = new Date(i.last_edited_time).getTime();
                 const orderStatus = i.properties["Status"].status?.name as OrderStatus;
 
-                
                 if (isFirstSync) {
                     this.syncLocalCache(i, pageLastEditedTime, orderStatus);
                     continue; 

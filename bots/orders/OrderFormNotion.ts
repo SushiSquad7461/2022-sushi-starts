@@ -1,19 +1,23 @@
 import { NotionClient } from "clients/NotionClient.js";
 import { config } from "../../Environment.js";
 import { OrderBot } from "./OrderBot.js";
-import { isFullUser, isFullPage } from "@notionhq/client";
-import { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints.js";
-import { orderFormProps } from "../../utils/NotionDatabaseConstants.js";
+import { isFullPage } from "@notionhq/client";
+import { toRequisitionObject } from "../../models/RequisitionObject.js";
+import { IncompleteRequisitionObjectError } from "../../models/errors/RequisitionObjectErrors.js";
+import { OrderStatus } from "../../models/OrderStatus.js";
+import { isRequisitionObjectPageResponse } from "../../models/RequisitionObjectPageResponse.js";
 
 export default class OrderForm {
     private bot: OrderBot;
     private idTimesMap: Record<string, number>;
+    private idStatusMap: Record<string, OrderStatus>;
     private initialSyncPromise: Promise<void>;
     private notion: NotionClient;
 
     constructor(orderBot: OrderBot, notionClient: NotionClient) {
         this.bot = orderBot;
         this.idTimesMap = {};
+        this.idStatusMap = {};
         this.notion = notionClient;
 
         this.initialSyncPromise = this.syncOrderForm(true);
@@ -39,57 +43,68 @@ export default class OrderForm {
             });
 
             for (let i of orders.results) {
-                if (!("last_edited_time" in i) || !isFullPage(i)) {
+                if (!isFullPage(i) || !isRequisitionObjectPageResponse(i)) {
                     console.warn(`Order form checker: Received a partial response from Notion, skipping.`);
                     continue;
                 }
-
+                
                 const pageLastEditedTime = new Date(i.last_edited_time).getTime();
-                // Send a Discord message only after the first sync,
-                // and only if there is a new order form entry or an order form entry has changed.
-                if (!isFirstSync && (!this.idTimesMap[i.id] || pageLastEditedTime != this.idTimesMap[i.id])) {
-                                    // given the required title, product name, and subtotal are not filled out, skip until next sync
-                    if (!this.isCompletedSushiOrder(i)) {
-                        console.warn(`Order form checker: Received a partially filled out page ${i.id}, skipping until required title, product name, and subtotal are filled out`);
-                        continue;
-                    }
+                const orderStatus = i.properties["Status"].status?.name as OrderStatus;
 
-                    const submitter = i.properties[orderFormProps.submitter];
-                    if (submitter != null && submitter?.type != "people") {
-                        console.warn(`Order form checker: Submitter not "people" type`);
-                        continue;
-                    }
-
-                    try {
-                        const submitterFirst = submitter?.people.at(0);
-                        if (submitterFirst != null &&  isFullUser(submitterFirst) && submitterFirst.name != null) {
-                            const rosterEntry = await this.notion.getRosterEntryFromName(submitterFirst.name);
-                            this.bot.updateUsers(rosterEntry?.discordTag ?? null, i);
-                        } else {
-                            throw new Error("Submitter object malformed")
-                        }
-                    } catch (error) {
-                        console.warn(`Order form checker: Could not get the name for an order.`, error);
-                        this.bot.updateUsers(null, i);
-                    }
+                
+                if (isFirstSync) {
+                    this.syncLocalCache(i, pageLastEditedTime, orderStatus);
+                    continue; 
                 }
 
-                this.idTimesMap[i.id] = pageLastEditedTime;
+                if (this.requiresSyncing(i.id, pageLastEditedTime, orderStatus)) {
+                    let reqObj;
+                    try {
+                        reqObj = toRequisitionObject(i);
+                    } catch (error) {
+                        if (error instanceof TypeError) {
+                            console.warn(`Skipping order form entry ${i.id}: Not a valid RequisitionObject candidate.`, error);
+                        } else if (error instanceof IncompleteRequisitionObjectError) {
+                            console.warn(`Skipping order form entry ${i.id}: Order missing required fields; will be reprocessed once filled out.`, error);
+                        }
+                        this.syncLocalCache(i, pageLastEditedTime, orderStatus);
+                        continue;
+                    }
+
+                    // Send a Discord message only after the first sync, if the order form has not been synced yet, or has been updated since the last check          
+                    try {
+                        if (reqObj.submitter.name === null) {
+                            throw new Error("Submitter name is null");
+                        }
+                        const rosterEntry = await this.notion.getRosterEntryFromName(reqObj.submitter.name);
+                        this.bot.updateUsers(rosterEntry?.discordTag ?? null, reqObj, i.url);
+
+                    } catch (error) {
+                        console.warn(`Order form checker: Could not get the name for an order. Updating users without tagging.`, error);
+                        this.bot.updateUsers(null, reqObj, i.url);
+                    }
+                }
+                // Update local cache with last update and status states
+                this.syncLocalCache(i, pageLastEditedTime, orderStatus);
             }
         } catch (e) {
             console.warn(`Order form checker: An error occurred when checking for order form updates.`, e);
         }
     }
 
-    private isCompletedSushiOrder(orderObject: PageObjectResponse): boolean {
-        const orderProperties = orderObject.properties;
-
-        const titleProperty = orderProperties[orderFormProps.description];
-        const title = titleProperty?.type === 'title' ? titleProperty.title?.at(0)?.plain_text : null;
-
-        const subtotalProperty = orderProperties[orderFormProps.subtotal];
-        const subtotal =  subtotalProperty?.type === 'number' ? subtotalProperty.number : null;
-
-        return title !== null && title !== orderFormProps.defaultDescription && subtotal !== null;
+    private requiresSyncing(id:string, lastEditTime: number, status: OrderStatus): boolean {
+        // If order has in status NEW, it has not been submitted yet, so we skip syncing
+        if (status == OrderStatus.NEW) {
+            console.log(`Order ${id} is NEW and has not been submitted yet, skipping.`);
+            return false; 
+        }
+        
+        // If the order has not been synced yet, or the status has been updated since the last check, we need to sync it
+        return !this.idTimesMap[id] || !this.idStatusMap[id] || (lastEditTime != this.idTimesMap[id] && status != this.idStatusMap[id]);
+    }
+    
+    private syncLocalCache(i: any, pageLastEditedTime: number, orderStatus: OrderStatus) {
+        this.idTimesMap[i.id] = pageLastEditedTime;
+        this.idStatusMap[i.id] = orderStatus;
     }
 }
